@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style>
+<title>Test 26</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<style>
+  /* Layout: one workbook column. Question number in the margin, answer box under the question. */
+  :root {
+    --bg: #f3f7f0;
+    --ink: #1d2a22;
+    --muted: #5e6f63;
+    --line: #cfdcd0;
+    --edge: #8fa394;
+    --field: #ffffff;
+    --leaf: #2c7a4b;
+    --on-leaf: #ffffff;
+    --leaf-soft: #dcefe0;
+    --wrong: #b3261e;
+    --wrong-soft: #fbe4e1;
+    --flash: #fff0b3;
+    --read: "Andika", "Atkinson Hyperlegible", Verdana, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141b16;
+      --ink: #e8f0e9;
+      --muted: #9db0a2;
+      --line: #2f3e33;
+      --edge: #66796b;
+      --field: #1c251f;
+      --leaf: #6cc48f;
+      --on-leaf: #0e1a12;
+      --leaf-soft: #1f3627;
+      --wrong: #ff8a80;
+      --wrong-soft: #3d1f1c;
+      --flash: #4a4216;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141b16;
+    --ink: #e8f0e9;
+    --muted: #9db0a2;
+    --line: #2f3e33;
+    --edge: #66796b;
+    --field: #1c251f;
+    --leaf: #6cc48f;
+    --on-leaf: #0e1a12;
+    --leaf-soft: #1f3627;
+    --wrong: #ff8a80;
+    --wrong-soft: #3d1f1c;
+    --flash: #4a4216;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--read);
+    font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.6rem);
+    line-height: 1.7;
+  }
+  .page {
+    max-width: 44rem;
+    margin-inline: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 1.25rem 3rem;
+  }
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.6em;
+    line-height: 1.2;
+  }
+
+  .test { list-style: none; margin: 0; padding: 0; }
+  .q {
+    display: grid;
+    grid-template-columns: 2.1em minmax(0, 1fr);
+    column-gap: 0.6em;
+    padding-block: 1em;
+    border-top: 2px solid var(--line);
+  }
+  .num {
+    width: 1.8em;
+    height: 1.8em;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--muted);
+  }
+  .q.done .num { background: var(--leaf); color: var(--on-leaf); }
+  .body { min-width: 0; display: grid; gap: 0.5em; }
+  .text { margin: 0; border-radius: 6px; }
+  .q.fresh .text { animation: fresh 1.4s ease-out; }
+  @keyframes fresh { from { background: var(--flash); } to { background: transparent; } }
+
+  .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin-inline: 0.12em;
+    font-size: 0.82em;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .frac-n { padding-inline: 0.22em; border-bottom: 2px solid currentColor; }
+  .frac-d { padding-inline: 0.22em; }
+
+  .ans { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin: 0; }
+  .unit { font-weight: 700; }
+  .unit-before { min-width: 0.7em; }
+  .box {
+    width: 6.2em;
+    min-height: 2.4em;
+    padding: 0.2em 0.5em;
+    border: 2px solid var(--edge);
+    border-radius: 8px;
+    background: var(--field);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .check {
+    min-height: 2.4em;
+    padding: 0.2em 0.9em;
+    border: 0;
+    border-radius: 8px;
+    background: var(--leaf);
+    color: var(--on-leaf);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .box:focus-visible, .check:focus-visible, .again:focus-visible {
+    outline: 3px solid var(--leaf);
+    outline-offset: 2px;
+  }
+  .mark { min-width: 1.2em; font-size: 1.5em; font-weight: 700; line-height: 1; }
+  .q.done .mark { color: var(--leaf); }
+  .q.done .box { background: var(--leaf-soft); border-color: var(--leaf); }
+  .q.wrong .mark { color: var(--wrong); }
+  .q.wrong .box { background: var(--wrong-soft); border-color: var(--wrong); }
+  .q.unsure .mark { color: var(--muted); }
+  .q.wrong .box, .q.unsure .box { animation: shake 0.4s; }
+  @keyframes shake {
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .q.fresh .text, .q.wrong .box, .q.unsure .box { animation: none; }
+  }
+
+  .score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8em;
+    padding-top: 1em;
+    border-top: 2px solid var(--line);
+  }
+  .score-value {
+    font-size: 2.6em;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .again {
+    min-height: 2.4em;
+    padding: 0.2em 1em;
+    border: 0;
+    border-radius: 8px;
+    background: var(--leaf);
+    color: var(--on-leaf);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <h1 id="title"></h1>
+  <ol class="test" id="test"></ol>
+  <div class="score" id="score" hidden>
+    <span class="score-value" id="score-value" role="status"></span>
+    <button class="again" id="again" type="button">New test</button>
+  </div>
+</div>
+
+<script id="engine">
+/* Question engine. It has no DOM code, so the Node check runs this same text.
+   A generator returns plain data:
+     parts   question text: strings and {n, d} fractions
+     text    the same text as one string, used to compare two questions
+     kind    "cents": a bare number means cents, the box shows c
+             "euro":  a bare number means euro, the box shows €
+             "count": a whole number with no unit
+     answer  whole cents for "cents" and "euro", whole number for "count"
+     meta    the numbers behind the question, used by the Node check */
+globalThis.PracticeEngine = (() => {
+  const int = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = (list) => list[int(0, list.length - 1)];
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+
+  /* Book-style money: 84c below one euro, otherwise €6·80. */
+  const money = (cents) => {
+    if (cents < 100) return cents + "c";
+    return "€" + Math.floor(cents / 100) + "·" + String(cents % 100).padStart(2, "0");
+  };
+  const euro = (whole) => "€" + whole;
+  const frac = (n, d) => ({ n, d });
+
+  /* Lowest-terms fractions with denominator 3 to 9 and numerator above 1. */
+  const FRACTIONS = [];
+  for (let d = 3; d <= 9; d++) {
+    for (let n = 2; n < d; n++) if (gcd(n, d) === 1) FRACTIONS.push([n, d]);
+  }
+  const ONE_PART_LEFT = FRACTIONS.filter(([n, d]) => d - n === 1);
+  const SOME_PARTS_LEFT = FRACTIONS.filter(([n, d]) => d - n >= 2);
+
+  const PEOPLE = [
+    ["Aoife", "She", "she", "her"], ["Niamh", "She", "she", "her"],
+    ["Emma", "She", "she", "her"], ["Orla", "She", "she", "her"],
+    ["Sara", "She", "she", "her"], ["Grace", "She", "she", "her"],
+    ["Cian", "He", "he", "his"], ["Liam", "He", "he", "his"],
+    ["Conor", "He", "he", "his"], ["Sean", "He", "he", "his"],
+    ["Adam", "He", "he", "his"], ["Jack", "He", "he", "his"],
+  ];
+  const SHOP = [
+    ["pencil", "pencils"], ["rubber", "rubbers"], ["sticker", "stickers"],
+    ["balloon", "balloons"], ["sweet", "sweets"], ["stamp", "stamps"],
+    ["ruler", "rulers"], ["pen", "pens"],
+  ];
+  const TREATS = [
+    ["bun", "buns"], ["cake", "cakes"], ["apple", "apples"], ["bar", "bars"],
+    ["lollipop", "lollipops"], ["biscuit", "biscuits"], ["pear", "pears"],
+  ];
+  const FRUIT = ["oranges", "apples", "plums", "pears", "lemons", "peaches"];
+  const PACKS = [
+    ["boxes", "eggs"], ["packets", "biscuits"], ["trays", "buns"],
+    ["bags", "sweets"], ["boxes", "crayons"], ["packets", "stickers"],
+  ];
+  const BAGS = ["bags", "boxes", "nets", "trays"];
+  const HALF_PAIRS = [[12, 6], [8, 4], [30, 15], [10, 5], [40, 20], [6, 3], [16, 8], [24, 12]];
+
+  const question = (parts, kind, answer, meta) => ({
+    parts,
+    text: parts.map((p) => (typeof p === "string" ? p : p.n + "/" + p.d)).join(""),
+    kind,
+    answer,
+    meta,
+  });
+
+  /* Wraps a maker: it tries again until the numbers are valid and differ from the book's. */
+  const generator = (type, make) => ({
+    type,
+    make() {
+      for (;;) {
+        const q = make();
+        if (q) return q;
+      }
+    },
+  });
+
+  const TEST_26 = [
+    generator("cost-of-one", () => {
+      const n = int(3, 9);
+      const each = int(11, Math.floor(99 / n));
+      const total = n * each;
+      if (n === 6 && total === 84) return null;
+      const [one, many] = pick(SHOP);
+      return question(
+        [`${n} ${many} cost ${total}c. How much is one ${one}?`],
+        "cents", each, { n, total });
+    }),
+
+    generator("how-many-for-money", () => {
+      const price = 5 * int(2, 10);
+      const count = int(4, 25);
+      const total = price * count;
+      if (total < 100 || total > 500) return null;
+      if (price === 20 && total === 240) return null;
+      const [, many] = pick(TREATS);
+      const name = many[0].toUpperCase() + many.slice(1);
+      return question(
+        [`${name} cost ${price}c each. How many can I buy for ${money(total)}?`],
+        "count", count, { price, total });
+    }),
+
+    generator("how-many-boxes", () => {
+      const d = int(3, 9);
+      const count = int(Math.ceil(100 / d), Math.floor(999 / d));
+      const total = d * count;
+      if (d === 6 && total === 240) return null;
+      const [box, item] = pick(PACKS);
+      return question(
+        [`${total} ${item} are packed in ${box} of ${d}. How many ${box} are filled?`],
+        "count", count, { d, total });
+    }),
+
+    generator("halve-money", () => {
+      const half = 5 * int(21, 199);
+      if (half % 100 === 0) return null;
+      const total = 2 * half;
+      if (total === 680) return null;
+      const [many, few] = pick(HALF_PAIRS);
+      const item = pick(FRUIT);
+      return question(
+        [`${many} ${item} cost ${money(total)}. How much do ${few} ${item} cost?`],
+        "euro", half, { many, few, total });
+    }),
+
+    generator("fraction-spent", () => {
+      const [n, d] = pick(FRACTIONS);
+      const part = int(4, 12);
+      const total = d * part;
+      if (total === 72 && n === 5 && d === 8) return null;
+      const [name, , she] = pick(PEOPLE);
+      return question(
+        [`${name} had ${euro(total)} and spent `, frac(n, d), ` of it. How much did ${she} spend?`],
+        "euro", n * part * 100, { n, d, total });
+    }),
+
+    generator("remainder", () => {
+      const total = int(100, 999);
+      const d = int(3, 9);
+      const left = total % d;
+      if (left === 0) return null;
+      if (total === 150 && d === 9) return null;
+      const item = pick(FRUIT);
+      return question(
+        [`${total} ${item} are packed into ${pick(BAGS)} of ${d}. How many ${item} are left over?`],
+        "count", left, { d, total });
+    }),
+
+    generator("spent-from-left", () => {
+      const [n, d] = pick(ONE_PART_LEFT);
+      const left = int(5, 30);
+      if (n * left > 160) return null;
+      if (n === 3 && d === 4 && left === 24) return null;
+      const [name, She, she, her] = pick(PEOPLE);
+      return question(
+        [`${name} spent `, frac(n, d), ` of ${her} money. ${She} had ${euro(left)} left. How much did ${she} spend?`],
+        "euro", n * left * 100, { n, d, left });
+    }),
+
+    generator("bags-of-tens", () => {
+      const d = 10 * int(2, 9);
+      const count = int(3, 19);
+      const total = d * count;
+      if (total > 999) return null;
+      if (d === 20 && total === 180) return null;
+      const item = pick(FRUIT);
+      return question(
+        [`A box holds ${total} ${item}. How many ${pick(BAGS.slice(0, 2))} of ${d} can be filled?`],
+        "count", count, { d, total });
+    }),
+
+    generator("start-from-left", () => {
+      const [n, d] = pick(SOME_PARTS_LEFT);
+      const part = int(2, 12);
+      const left = (d - n) * part;
+      if (n === 5 && d === 8 && left === 15) return null;
+      const [name, She, she, her] = pick(PEOPLE);
+      return question(
+        [`${name} spent `, frac(n, d), ` of ${her} money. ${She} had ${euro(left)} left. How much had ${she} at the start?`],
+        "euro", d * part * 100, { n, d, left });
+    }),
+
+    generator("change-then-divide", () => {
+      const n = int(2, 9);
+      const each = 5 * int(3, 19);
+      const spent = n * each;
+      if (n === 5 && each === 30) return null;
+      const paid = pick([200, 500, 1000].filter((p) => p > spent));
+      const change = paid - spent;
+      const [one, many] = pick(TREATS);
+      return question(
+        [`I paid with ${money(paid)} for ${n} ${many} and got ${money(change)} change. How much was one ${one}?`],
+        "cents", each, { n, paid, change });
+    }),
+  ];
+
+  /* One entry per test. Add a new test here. The page shows a picker only when it needs one. */
+  const TESTS = [
+    { id: "test-26", title: "Test 26", generators: TEST_26 },
+  ];
+
+  /* A new question for a slot. With prev, the words and the answer both change. */
+  const nextQuestion = (gen, prev) => {
+    let q = gen.make();
+    if (!prev) return q;
+    for (let i = 0; i < 200 && (q.text === prev.text || q.answer === prev.answer); i++) q = gen.make();
+    return q;
+  };
+
+  const tidy = (raw) =>
+    String(raw).trim().toLowerCase().replace(/[·•∙⋅,]/g, ".").replace(/\s+/g, "");
+
+  /* Reads money as whole cents, with no floating-point step.
+     Returns null when no amount can be read, NaN when it is not a whole number of cents. */
+  const readCents = (raw, kind) => {
+    const m = tidy(raw).match(/^(€|euros?|eur)?(\d*)(?:\.(\d*))?(€|euros?|eur|cents?|c)?$/);
+    if (!m) return null;
+    const [, before, whole, part, after] = m;
+    if (!whole && !part) return null;
+    if (whole.length > 7) return NaN;
+    const isCentMark = !!after && after[0] === "c";
+    const isEuroMark = !!before || (!!after && !isCentMark);
+    if (isCentMark && before) return null;
+    const hasPoint = part !== undefined;
+    if (isCentMark || (!isEuroMark && !hasPoint && kind === "cents")) {
+      if (hasPoint && /[1-9]/.test(part)) return NaN;
+      return Number(whole || "0");
+    }
+    const places = part || "";
+    if (/[1-9]/.test(places.slice(2))) return NaN;
+    return Number(whole || "0") * 100 + Number(places.slice(0, 2).padEnd(2, "0"));
+  };
+
+  /* Reads a count. Words after the number are allowed: 12 buns. */
+  const readCount = (raw) => {
+    const m = tidy(raw).match(/^(\d+)(?:\.(\d*))?[a-z]*$/);
+    if (!m) return null;
+    if (m[1].length > 7) return NaN;
+    if (m[2] && /[1-9]/.test(m[2])) return NaN;
+    return Number(m[1]);
+  };
+
+  /* Returns "right", "wrong", or "unclear" when the box holds no number. */
+  const check = (q, raw) => {
+    const value = q.kind === "count" ? readCount(raw) : readCents(raw, q.kind);
+    if (value === null) return "unclear";
+    return value === q.answer ? "right" : "wrong";
+  };
+
+  return { TESTS, nextQuestion, check, readCents, readCount, FRACTIONS };
+})();
+</script>
+
+<script>
+(() => {
+  const E = globalThis.PracticeEngine;
+  const test = E.TESTS[0];
+  const MARK_MS = 900;
+  const list = document.getElementById("test");
+  const score = document.getElementById("score");
+  const scoreValue = document.getElementById("score-value");
+  let slots = [];
+
+  const make = (tag, className, text) => {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== undefined) el.textContent = text;
+    return el;
+  };
+
+  const fractionNode = ({ n, d }) => {
+    const el = make("span", "frac");
+    el.setAttribute("role", "img");
+    el.setAttribute("aria-label", n + " over " + d);
+    el.append(make("span", "frac-n", String(n)), make("span", "frac-d", String(d)));
+    return el;
+  };
+
+  const showQuestion = (slot) => {
+    const { q, ui } = slot;
+    ui.text.replaceChildren(
+      ...q.parts.map((p) => (typeof p === "string" ? document.createTextNode(p) : fractionNode(p)))
+    );
+    ui.before.textContent = q.kind === "euro" ? "€" : "";
+    ui.after.textContent = q.kind === "cents" ? "c" : "";
+    ui.after.hidden = q.kind !== "cents";
+    ui.box.inputMode = q.kind === "count" ? "numeric" : "decimal";
+    ui.box.value = "";
+  };
+
+  const finish = () => {
+    const right = slots.filter((s) => s.firstTry).length;
+    scoreValue.textContent = right + "/" + slots.length;
+    score.hidden = false;
+    score.scrollIntoView({ block: "center" });
+  };
+
+  const focusNext = (from) => {
+    for (let i = 1; i <= slots.length; i++) {
+      const s = slots[(from + i) % slots.length];
+      if (!s.done) {
+        s.ui.box.focus();
+        return;
+      }
+    }
+    finish();
+  };
+
+  const onCheck = (slot, index) => {
+    const { ui } = slot;
+    if (slot.done || slot.busy) return;
+    if (!ui.box.value.trim()) {
+      ui.box.focus();
+      return;
+    }
+    const result = E.check(slot.q, ui.box.value);
+
+    if (result === "right") {
+      slot.done = true;
+      ui.row.classList.add("done");
+      ui.mark.textContent = "✓";
+      ui.mark.setAttribute("aria-label", "Correct");
+      ui.box.readOnly = true;
+      ui.box.tabIndex = -1;
+      ui.check.hidden = true;
+      focusNext(index);
+      return;
+    }
+
+    slot.busy = true;
+    const isWrong = result === "wrong";
+    ui.row.classList.add(isWrong ? "wrong" : "unsure");
+    ui.mark.textContent = isWrong ? "✗" : "?";
+    ui.mark.setAttribute("aria-label", isWrong ? "Wrong" : "Type a number");
+    if (isWrong) slot.firstTry = false;
+
+    setTimeout(() => {
+      slot.busy = false;
+      ui.row.classList.remove("wrong", "unsure");
+      ui.mark.textContent = "";
+      ui.mark.removeAttribute("aria-label");
+      if (isWrong) {
+        slot.q = E.nextQuestion(slot.gen, slot.q);
+        showQuestion(slot);
+        ui.row.classList.remove("fresh");
+        void ui.row.offsetWidth;
+        ui.row.classList.add("fresh");
+      }
+      ui.box.focus();
+    }, MARK_MS);
+  };
+
+  const buildRow = (slot, index) => {
+    const row = make("li", "q");
+    const num = make("span", "num", String(index + 1));
+    const body = make("div", "body");
+    const text = make("p", "text");
+    const form = make("form", "ans");
+    form.noValidate = true;
+    const before = make("span", "unit unit-before");
+    const box = make("input", "box");
+    box.id = "answer-" + (index + 1);
+    box.type = "text";
+    box.autocomplete = "off";
+    box.spellcheck = false;
+    box.setAttribute("autocorrect", "off");
+    box.setAttribute("autocapitalize", "off");
+    box.setAttribute("aria-label", "Answer " + (index + 1));
+    const after = make("span", "unit");
+    const check = make("button", "check", "Check");
+    check.type = "submit";
+    const mark = make("span", "mark");
+    mark.setAttribute("aria-live", "polite");
+    form.append(before, box, after, check, mark);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      onCheck(slot, index);
+    });
+    body.append(text, form);
+    row.append(num, body);
+    slot.ui = { row, text, before, after, box, check, mark };
+    showQuestion(slot);
+    return row;
+  };
+
+  const newSet = () => {
+    slots = test.generators.map((gen) => ({
+      gen,
+      q: E.nextQuestion(gen),
+      done: false,
+      busy: false,
+      firstTry: true,
+    }));
+    list.replaceChildren(...slots.map(buildRow));
+    score.hidden = true;
+  };
+
+  document.getElementById("title").textContent = test.title;
+  document.getElementById("again").addEventListener("click", () => {
+    newSet();
+    window.scrollTo(0, 0);
+  });
+  newSet();
+})();
+</script>
+</body>
+</html>
