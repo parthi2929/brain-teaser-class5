@@ -32,7 +32,7 @@ Maths practice for a class 5 pupil in Ireland. It runs on Cloudflare Pages with 
 
 ## Add a topic
 
-1. Copy `public/topics/averages.js` to `topics/<topic>.js`.
+1. Copy `public/topics/averages.js` to `public/topics/<topic>.js`.
 2. Set `id` and `title`. Set `learn` to `{ steps: () => [...] }` (steps from `js/steps.js`) or `{ page: "lesson.html" }`.
 3. Add `<script src="topics/<topic>.js"></script>` to `index.html`, after the other topic files.
 
@@ -41,7 +41,7 @@ Every topic has a Learn page.
 ## Add a test
 
 1. Copy `public/tests/test-18.js` to `public/tests/test-NN.js`.
-2. Write one `generator(type, make)` per book question, in book order. `make()` returns `question(parts, kind, answer, { meta, post, vis })`, or `null` to try again:
+2. Write one `generator(type, make)` per book question, in book order. `make()` returns `question(parts, kind, answer, { meta, post, work })`, or `null` to try again:
    - `kind` is `"count"` (whole number; `post` is a unit after the box, such as `cm`), `"cents"` or `"euro"` (answer in cents).
    - `meta` holds the numbers, for the Node check and the run record.
    - `work` is a function that returns the copybook working from `js/work.js`, for example `() => W.average([7, 11, 6])`. Write a new working in `js/work.js` when no existing one fits; its last line must end with "?" and hold `final` = the answer.
