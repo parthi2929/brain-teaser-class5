@@ -1,11 +1,11 @@
-/* Test 17, Data 1 (averages). 10 questions in book order. Also holds her own Test 17 answers. */
+/* Test 17, Data 1 (averages). 10 questions in book order. */
 (() => {
   const E = globalThis.Engine, S = globalThis.Steps, W = globalThis.Work;
   const { int, pick, sum, generator, question } = E;
 
   const NAMES = ["Joan", "Artil", "Sandi", "Aoife", "Cian", "Niamh", "Liam", "Orla", "Sean", "Emma", "Conor", "Grace"];
   const andList = (l) => l.slice(0, -1).join(", ") + " and " + l[l.length - 1];
-  const { STAMP, FROGS, THINGS, cds: cdsVis, BOOK_TABLE: BOOK } = S.pics;
+  const { STAMP, FROGS, THINGS } = S.pics;
 
   /* n whole numbers with the given average, not all the same. */
   const nums = (n, avg) => {
@@ -93,9 +93,6 @@
     tableGen("home"),
     tableGen("away"),
   ];
-
-  /* Her Test 17 answers use the book's own numbers. */
-  const stampsBook = () => S.level([7, 11, 6], { ...STAMP, who: S.people(["Joan", "Artil", "Sandi"]) });
 
   E.register({ id: "test-17", title: "Test 17", topic: "averages", generators: GENERATORS });
 })();

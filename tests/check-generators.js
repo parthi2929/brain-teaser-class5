@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const root = path.join(__dirname, "..");
+const root = path.join(__dirname, "..", "public");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const files = [...html.matchAll(/<script src="((?:js\/(?:engine|steps|work)|topics\/[^"]+|tests\/[^"]+)\.js)"><\/script>/g)].map((m) => m[1]);
 const ctx = {};

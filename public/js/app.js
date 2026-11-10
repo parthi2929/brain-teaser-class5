@@ -1,9 +1,10 @@
-/* The app: home screen by topic, one Learn page per topic, one practice page per test, her Test 17 answers.
+/* The app: home screen by topic, one Learn page per topic, one practice page per test.
    Practice rules (same for every test):
    - the questions come in book order with new numbers; answers stay hidden
    - a wrong answer shows ✗, then the same question stays and its 👀 helper appears
    - new questions come only when she starts the test again
-   - every run is stored as a record (js/records.js) */
+   - every run is stored as a record (js/records.js) when she is signed in
+   The admin settings (js/account.js) set: tries per question, when the helper appears, which tests show. */
 (() => {
   const E = globalThis.Engine, P = globalThis.Player;
   const $ = (id) => document.getElementById(id);
@@ -15,12 +16,10 @@
   };
   const MARK_MS = 900;
 
-  /* Admin settings arrive from the server later. Default: the helper waits for a wrong answer. */
-  const opt = { always: false };
+  const settings = () => globalThis.Account.state.settings;
 
   /* ---- modal ---- */
   const modal = $("modal");
-  const openVis = (steps) => { modal.hidden = false; P.play($("modal-vis"), steps); };
   let afterClose = null;
   const closeVis = () => {
     modal.hidden = true;
@@ -120,9 +119,9 @@
     <rect x="4" y="30" width="12" height="12" rx="3" fill="#6b9cf0"/><rect x="4" y="16" width="12" height="12" rx="3" fill="#6b9cf0"/>
     <rect x="22" y="30" width="12" height="12" rx="3" fill="#f39a4f"/><rect x="22" y="16" width="12" height="12" rx="3" fill="#6b9cf0"/>
     <rect x="40" y="30" width="12" height="12" rx="3" fill="#b18ae6"/><rect x="40" y="16" width="12" height="12" rx="3" fill="#f39a4f"/></g></svg>`;
-  E.TOPICS.forEach((topic) => {
-    const tests = E.TESTS.filter((t) => t.topic === topic.id);
-    if (!tests.length && !topic.learn) return;
+  const renderHome = () => $("topics").replaceChildren(...E.TOPICS.map((topic) => {
+    const tests = E.TESTS.filter((t) => t.topic === topic.id && !settings().hiddenTests.includes(t.id));
+    if (!tests.length && !topic.learn) return "";
     const block = make("section", "topic");
     block.append(make("h2", "", topic.title));
     const tiles = make("div", "tiles");
@@ -139,10 +138,11 @@
       tiles.append(b);
     });
     block.append(tiles);
-    $("topics").append(block);
-  });
-  const SECTIONS = ["home", "learn", "practice", "her"];
-  const herTest = E.TESTS.find((t) => t.her);
+    return block;
+  }));
+  renderHome();
+  globalThis.Account.onChange(renderHome);
+  const SECTIONS = ["home", "learn", "practice", "account"];
   const showLearn = (topic) => {
     $("home-link").textContent = topic.title;
     if (topic.learn.page) {
@@ -154,7 +154,6 @@
     } else P.play($("learn"), topic.learn.steps(), () => go("home"));
   };
   const go = (where) => {
-    if (current && current.run && !current.run.finishedAt && where !== current.test.id) current = null;
     const test = E.TESTS.find((t) => t.id === where);
     const topic = where.startsWith("learn:") && E.TOPICS.find((t) => "learn:" + t.id === where);
     const sec = test ? "practice" : topic ? "learn" : where;
@@ -162,7 +161,6 @@
     window.scrollTo(0, 0);
     if (test) startTest(test);
     else if (topic) showLearn(topic);
-    else if (where === "her") { $("home-link").textContent = "Her Test 17"; buildHer(); }
     else $("home-link").textContent = "Brain Teaser";
   };
   document.addEventListener("click", (e) => {
@@ -195,7 +193,7 @@
     ui.after.textContent = q.kind === "cents" ? "c" : q.post || "";
     ui.box.inputMode = q.kind === "count" ? "numeric" : "decimal";
     ui.box.value = "";
-    ui.see.hidden = !(opt.always || slot.hinted);
+    ui.see.hidden = !(settings().helper === "always" || slot.hinted);
   };
   const finish = () => {
     const score = slots.filter((s) => s.firstTry).length;
@@ -209,7 +207,24 @@
     if (slot.done || slot.busy) return;
     if (!ui.box.value.trim()) { ui.box.focus(); return; }
     const result = E.check(slot.q, ui.box.value);
-    if (result !== "unclear") globalThis.Records.attempt(current.run, index, ui.box.value.trim(), result);
+    const given = ui.box.value.trim();
+    if (result === "wrong") slot.tries = (slot.tries || 0) + 1;
+    /* With a tries limit, the last wrong try closes the question as wrong. */
+    const closed = result === "wrong" && settings().maxTries > 0 && slot.tries >= settings().maxTries;
+    if (result !== "unclear") globalThis.Records.attempt(current.run, index, slot.gen.type, given, result === "right", closed);
+    if (closed) {
+      slot.done = true;
+      slot.firstTry = false;
+      ui.row.classList.add("closed");
+      ui.mark.textContent = "✗";
+      ui.box.readOnly = true;
+      ui.check.hidden = true;
+      ui.see.hidden = true;
+      const rest = slots.find((s, k) => k > index && !s.done) || slots.find((s) => !s.done);
+      if (rest) rest.ui.box.focus();
+      else finish();
+      return;
+    }
     if (result === "right") {
       slot.done = true;
       ui.row.classList.add("done");
@@ -277,24 +292,6 @@
     $("score").hidden = true;
   };
   $("again").addEventListener("click", () => { startTest(current.test); window.scrollTo(0, 0); });
-
-  /* ---- her Test 17 ---- */
-  const buildHer = () => {
-    $("her-list").replaceChildren(...herTest.her.map((h, k) => {
-      const row = make("div", "her-row");
-      row.append(
-        make("span", "num", String(k + 1)),
-        make("div", "", `<small>${h.q}</small><br><span class="hand">${h.her}</span> ` +
-          (h.ok ? '<span class="ok">✓</span>' : `<span class="no">✗</span> <span class="hand fix">${h.right}</span>`)),
-      );
-      const see = make("button", "see", "👀");
-      see.type = "button";
-      see.setAttribute("aria-label", "See why");
-      see.addEventListener("click", () => openVis(h.vis()));
-      row.append(see);
-      return row;
-    }));
-  };
 
   /* For browser checks: the current questions. */
   globalThis.App = { slots: () => slots, go };

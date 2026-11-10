@@ -261,3 +261,23 @@
   .wcheck { display: inline-flex; gap: 0.3em; align-items: center; margin-left: 0.4em; vertical-align: middle; }
   .wcheck .check { min-height: 1.9em; padding: 0 0.6em; }
   .wcheck .mark { color: var(--wrong); }
+
+  /* User button (top right) and its menu */
+  .user { position: relative; }
+  .userbtn { border: 2px solid var(--edge); background: var(--field); border-radius: 999px; padding: 0.1em 0.8em; font-size: 0.8em; font-weight: 700; }
+  .usermenu {
+    position: absolute; right: 0; top: 2.3em; z-index: 6; min-width: 12em; display: grid; gap: 0.3em; padding: 0.6em;
+    background: var(--field); border: 2px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); font-size: 0.85em;
+  }
+  .usermenu button { border: 0; background: none; text-align: left; padding: 0.2em 0.3em; border-radius: 6px; font-weight: 700; }
+  .usermenu button:hover { background: var(--leaf-soft); }
+  .who-line { color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 0.3em; }
+  .devform { display: flex; gap: 0.3em; flex-wrap: wrap; align-items: center; }
+  .devform input { width: 10em; font: inherit; }
+  #account h2 { font-size: 1.05em; margin: 1em 0 0.3em; }
+  table.book.wide { width: 100%; font-size: 0.75em; }
+  table.book.wide td:first-child { white-space: nowrap; }
+  #account .settings { gap: 0.5em; }
+  #account fieldset { border: 1px solid var(--line); border-radius: 8px; }
+  .q.closed .mark { color: var(--wrong); }
+  .q.closed .box { background: var(--wrong-soft); border-color: var(--wrong); }
