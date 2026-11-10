@@ -322,6 +322,7 @@ function buildLesson(N, D, thing) {
     boxNote: R ? 'left over' : ''
   });
 
+  if (PARAMS.get('nofinal') === '1') steps.pop();
   return { N, D, Q, R, len, thing, th, steps, dealMeta, rows: Math.max(6, row0 + 2) };
 }
 </script>
@@ -348,7 +349,7 @@ function buildLesson(N, D, thing) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const pageEl = $('page');
 
-  let sumNo = 0, N = 96, D = 6, thing = 'apples', asks = 'bags', mode = 'show';
+  let sumNo = 0, N = 96, D = 6, thing = 'apples', asks = 'bags', mode = PARAMS.get('mode') === 'try' ? 'try' : 'show';
   let lesson = null, idx = 0, answered = new Set(), attempts = 0, typed = '', guesses = [];
 
   // ---------- Table drawing ----------
@@ -793,7 +794,7 @@ function buildLesson(N, D, thing) {
     const th = lesson.th, { Q, R } = lesson;
     const text = N + ' ' + th.many + '. ' + D + ' in each ' + th.bag + '. ' + (asks === 'left' ? 'How many left over?' : 'How many ' + th.bags + '?');
     const answer = asks === 'left' ? R + ' ' + (R === 1 ? th.one : th.many) : Q + ' ' + (Q === 1 ? th.bag : th.bags);
-    $('question').innerHTML = text + (idx === lesson.steps.length - 1 ? '<b>' + answer + '</b>' : '');
+    $('question').innerHTML = text + (idx === lesson.steps.length - 1 && PARAMS.get('nofinal') !== '1' ? '<b>' + answer + '</b>' : '');
   }
   function show() {
     const st = lesson.steps[idx], wait = pending();
@@ -859,7 +860,7 @@ function buildLesson(N, D, thing) {
     const a = lesson.steps[idx].ask;
     if (v === a.answer) { solved(); return; }
     attempts++; typed = '';
-    if (attempts >= (a.reveal || 4)) { solved(); return; }
+    if (PARAMS.get('nofinal') !== '1' && attempts >= (a.reveal || 4)) { solved(); return; }
     if (a.type === 'digit') {
       guesses.push(guessRow(a, v));
       guesses = guesses.slice(-2);
@@ -873,7 +874,7 @@ function buildLesson(N, D, thing) {
   }
   function step(dir) {
     const n = idx + dir;
-    if (n >= lesson.steps.length) { sumNo = (sumNo + 1) % SUMS.length; loadSum(); return; }
+    if (n >= lesson.steps.length) { if (ASKED) return; sumNo = (sumNo + 1) % SUMS.length; loadSum(); return; }
     if (n < 0) {
       if (sumNo === 0) return;
       sumNo--; loadSum(); return;

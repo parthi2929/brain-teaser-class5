@@ -236,3 +236,28 @@
   .topic h2 { margin: 0 0 0.3em; font-size: 1.1em; color: var(--muted); }
   .topic .tiles { margin-top: 0; grid-template-columns: repeat(auto-fit, minmax(9em, 1fr)); }
   .learnframe { height: min(86vh, 760px); margin-top: 0.6em; }
+
+  /* The 👀 helper: picture on top, copybook working below */
+  .controlled .eq, .controlled .hint { display: none; }
+  .workview { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.4em; padding-top: 1.4em; }
+  .wq { margin: 0; font-size: 0.85em; color: var(--muted); }
+  .wpic .stage, .wpic .tview { min-height: 0; }
+  .wlines {
+    margin: 0; padding: 0.4em 0.6em 0.4em 2.2em; border-radius: 10px; list-style: none;
+    background-color: var(--field); border: 1px solid var(--line);
+    background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 2.4em;
+    line-height: 2.4em; font-variant-numeric: tabular-nums;
+  }
+  .wline { font-weight: 700; }
+  .wline.say { margin-left: -1.6em; font-weight: 400; color: var(--muted); font-style: italic; }
+  .wline.final { color: var(--leaf); }
+  .wbox {
+    width: 3.6em; height: 1.8em; margin: 0 0.15em; padding: 0 0.3em; border: 2px solid var(--edge); border-radius: 6px;
+    background: var(--bg); color: var(--ink); font: inherit; font-family: var(--hand); font-size: 1.15em; text-align: center; vertical-align: middle;
+  }
+  .wbox.ok { border-color: var(--leaf); background: var(--leaf-soft); }
+  .wbox.bad { border-color: var(--wrong); background: var(--wrong-soft); animation: shake 0.4s; }
+  .wdone { color: var(--c0); font-size: 1.3em; padding-inline: 0.15em; }
+  .wcheck { display: inline-flex; gap: 0.3em; align-items: center; margin-left: 0.4em; vertical-align: middle; }
+  .wcheck .check { min-height: 1.9em; padding: 0 0.6em; }
+  .wcheck .mark { color: var(--wrong); }

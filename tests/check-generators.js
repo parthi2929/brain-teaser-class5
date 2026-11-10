@@ -6,7 +6,7 @@ const vm = require("vm");
 
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const files = [...html.matchAll(/<script src="((?:js\/(?:engine|steps)|topics\/[^"]+|tests\/[^"]+)\.js)"><\/script>/g)].map((m) => m[1]);
+const files = [...html.matchAll(/<script src="((?:js\/(?:engine|steps|work)|topics\/[^"]+|tests\/[^"]+)\.js)"><\/script>/g)].map((m) => m[1]);
 const ctx = {};
 vm.createContext(ctx);
 files.forEach((f) => vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), ctx, { filename: f }));
@@ -53,18 +53,27 @@ const CHECKS = {
   "change-then-divide": (q) => q.kind === "cents" && q.meta.paid - q.meta.change === q.answer * q.meta.n && q.meta.change > 0,
 };
 
-// The last step of a coins visual must show each share equal to the answer, with an empty purse.
-const coinValue = (pile) => Object.entries(pile).reduce((s, [u, n]) => s + Number(u) * n, 0);
-const checkVis = (q, steps, type) => {
-  assert(Array.isArray(steps) && steps.length > 0, type, "no visual steps", q);
-  steps.forEach((s) => assert(typeof s.mode === "string", type, "step without mode", q));
-  const last = steps[steps.length - 1];
-  if (last.mode === "coins") {
-    last.piles.forEach((p) => assert(coinValue(p) === q.answer, type, `coin share ${coinValue(p)} != ${q.answer}`, q));
-    assert(Object.values(last.purse).every((n) => n === 0), type, "coins left in the purse", q);
-  }
-  if (last.mode === "groups") assert(last.count === q.answer && last.coins % last.k === 0, type, "groups", q);
-  if (last.mode === "frame") assert(/^bags\.html\?n=\d+&d=\d+&/.test(last.src), type, "bags link", q);
+// The working must end with a final line equal to the answer, every blank must take its own value,
+// and every picture index must exist.
+const fmt = (kind, v) => (kind === "euro" ? (v / 100).toFixed(2) : String(v));
+const checkWork = (q, type) => {
+  const w = q.work();
+  assert(w && Array.isArray(w.steps) && w.steps.length > 0 && Array.isArray(w.lines), type, "no working", q);
+  const last = w.lines[w.lines.length - 1];
+  assert(last.final === q.answer, type, `final ${last.final} != answer ${q.answer}`, q);
+  assert(/\?$/.test(last.parts.join("")), type, "final line must end with ?", q);
+  w.lines.forEach((l, i) => {
+    if (i < w.lines.length - 1) assert(l.final === undefined, type, "final before the end", q);
+    [l.pic, l.picDone].forEach((k) => assert(k === undefined || (k >= 0 && k < w.steps.length), type, `pic ${k} missing`, q));
+    (l.parts || []).forEach((p) => {
+      if (typeof p !== "object") return;
+      assert(isInt(p.ask) && p.ask >= 0, type, `blank not whole: ${p.ask}`, q);
+      assert(E.check({ kind: p.kind, answer: p.ask }, fmt(p.kind, p.ask)) === "right", type, `blank ${p.ask} not readable`, q);
+    });
+  });
+  w.steps.forEach((s) => assert(typeof s.mode === "string", type, "step without mode", q));
+  const lastPic = w.steps[w.steps.length - 1];
+  if (lastPic.mode === "coins") assert(lastPic.hideValues, type, "coin values shown on the last picture", q);
 };
 
 const report = [];
@@ -81,7 +90,7 @@ E.TESTS.forEach((test) => {
       assert(check && check(q), gen.type, "constraint", q);
       assert(isInt(q.answer) && q.answer >= 0, gen.type, "not whole", q);
       assert(!/\.\d/.test(q.text), gen.type, "dot in text", q);
-      checkVis(q, q.vis(), gen.type);
+      checkWork(q, gen.type);
       seen.add(q.text);
       min = Math.min(min, q.answer);
       max = Math.max(max, q.answer);

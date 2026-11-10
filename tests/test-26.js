@@ -1,6 +1,6 @@
 /* Test 26: division, money and fractions. 10 questions in book order. */
 (() => {
-  const E = globalThis.Engine, S = globalThis.Steps;
+  const E = globalThis.Engine, W = globalThis.Work;
   const { int, pick, money, euro, frac, generator, question } = E;
 
   /* Lowest-terms fractions with denominator 3 to 9 and numerator above 1. */
@@ -48,8 +48,7 @@
       if (n === 6 && total === 84) return null;
       const [one, many, pic] = pick(SHOP);
       return question([`${n} ${many} cost ${total}c. How much is one ${one}?`], "cents", each,
-        { meta: { n, total }, vis: () => S.shareCoins(total, n, [10, 1], pile(n, pic, "1 " + one),
-          { startEq: `${total}c → ${n} ${many}`, startHint: `Share the coins equally: 1 share for each ${one}.` }) });
+        { meta: { n, total }, work: () => W.costOfOne(total, n, one, pile(n, pic, "1 " + one)) });
     }),
 
     generator("how-many-for-money", () => {
@@ -61,7 +60,7 @@
       const [one, many, pic] = pick(TREATS);
       const name = many[0].toUpperCase() + many.slice(1);
       return question([`${name} cost ${price}c each. How many can I buy for ${money(total)}?`], "count", count,
-        { meta: { price, total }, vis: () => S.groupCoins(total, price, { one, pic }) });
+        { meta: { price, total }, work: () => W.howMany(total, price, { one, pic }) });
     }),
 
     generator("how-many-boxes", () => {
@@ -71,7 +70,7 @@
       if (d === 6 && total === 240) return null;
       const [box, item] = pick(PACKS);
       return question([`${total} ${item} are packed in ${box} of ${d}. How many ${box} are filled?`], "count", count,
-        { meta: { d, total }, vis: () => S.bags(total, d, item, "bags", ONE[box], box) });
+        { meta: { d, total }, work: () => W.bags(total, d, item, "bags", ONE[box], box) });
     }),
 
     generator("halve-money", () => {
@@ -82,9 +81,7 @@
       const [many, few] = pick(HALF_PAIRS);
       const item = pick(FRUIT);
       return question([`${many} ${item} cost ${money(total)}. How much do ${few} ${item} cost?`], "euro", half,
-        { meta: { many, few, total }, vis: () => S.shareCoins(total, 2, [100, 10, 5], pile(2, FRUIT_PIC[item], few + " " + item),
-          { startEq: `${money(total)} → 2 halves`, startHint: `${few} is half of ${many}, so share the money into 2.`,
-            endHint: `Half the ${item} cost half the money.` }) });
+        { meta: { many, few, total }, work: () => W.halve(total, many, few, item, pile(2, FRUIT_PIC[item], few + " " + item)) });
     }),
 
     generator("fraction-spent", () => {
@@ -94,7 +91,7 @@
       if (total === 72 && n === 5 && d === 8) return null;
       const [name, , she] = pick(PEOPLE);
       return question([`${name} had ${euro(total)} and spent `, frac(n, d), ` of it. How much did ${she} spend?`],
-        "euro", n * part * 100, { meta: { n, d, total }, vis: () => S.fractionOf(total, n, d, name) });
+        "euro", n * part * 100, { meta: { n, d, total }, work: () => W.fractionOf(total, n, d, name) });
     }),
 
     generator("remainder", () => {
@@ -106,7 +103,7 @@
       const item = pick(FRUIT);
       const bags = pick(BAGS);
       return question([`${total} ${item} are packed into ${bags} of ${d}. How many ${item} are left over?`], "count", left,
-        { meta: { d, total }, vis: () => S.bags(total, d, item, "left", ONE[bags], bags) });
+        { meta: { d, total }, work: () => W.bags(total, d, item, "left", ONE[bags], bags) });
     }),
 
     generator("spent-from-left", () => {
@@ -116,7 +113,7 @@
       if (n === 3 && d === 4 && left === 24) return null;
       const [name, She, she, her] = pick(PEOPLE);
       return question([`${name} spent `, frac(n, d), ` of ${her} money. ${She} had ${euro(left)} left. How much did ${she} spend?`],
-        "euro", n * left * 100, { meta: { n, d, left }, vis: () => S.spentFromLeft(n, d, left) });
+        "euro", n * left * 100, { meta: { n, d, left }, work: () => W.fromLeft(n, d, left, false) });
     }),
 
     generator("bags-of-tens", () => {
@@ -128,7 +125,7 @@
       const item = pick(FRUIT);
       const bags = pick(BAGS.slice(0, 2));
       return question([`A box holds ${total} ${item}. How many ${bags} of ${d} can be filled?`], "count", count,
-        { meta: { d, total }, vis: () => S.bags(total, d, item, "bags", ONE[bags], bags) });
+        { meta: { d, total }, work: () => W.bags(total, d, item, "bags", ONE[bags], bags) });
     }),
 
     generator("start-from-left", () => {
@@ -138,7 +135,7 @@
       if (n === 5 && d === 8 && left === 15) return null;
       const [name, She, she, her] = pick(PEOPLE);
       return question([`${name} spent `, frac(n, d), ` of ${her} money. ${She} had ${euro(left)} left. How much had ${she} at the start?`],
-        "euro", d * part * 100, { meta: { n, d, left }, vis: () => S.startFromLeft(n, d, left) });
+        "euro", d * part * 100, { meta: { n, d, left }, work: () => W.fromLeft(n, d, left, true) });
     }),
 
     generator("change-then-divide", () => {
@@ -151,9 +148,7 @@
       const [one, many, pic] = pick(TREATS);
       return question([`I paid with ${money(paid)} for ${n} ${many} and got ${money(change)} change. How much was one ${one}?`],
         "cents", each, { meta: { n, paid, change },
-          vis: () => S.shareCoins(spent, n, [100, 10, 5], pile(n, pic, "1 " + one),
-            { startEq: `${money(paid)} − ${money(change)} = ${S.B(money(spent))}`,
-              startHint: `Take away the change. The rest paid for ${n} ${many}.` }) });
+          work: () => W.change(paid, change, n, one, many, pile(n, pic, "1 " + one)) });
     }),
   ];
 

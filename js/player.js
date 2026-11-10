@@ -31,7 +31,7 @@ globalThis.Player = (() => {
           for (let j = 0; j < (p[u] || 0); j++) cs.append(coin(u, step.give === u ? "new" : ""));
         });
         const v = value(p);
-        pl.append(make("div", "pval", v ? money(v) : ""), cs, who(step.pile[k]));
+        pl.append(make("div", "pval", v && !step.hideValues ? money(v) : ""), cs, who(step.pile[k]));
         piles.append(pl);
       });
       view.append(piles);
@@ -47,7 +47,7 @@ globalThis.Player = (() => {
       }
       for (let g = 0; g < step.count; g++) {
         const box = make("div", "grp");
-        box.append(make("div", "gpic", `${step.item.pic}<small>${g + 1}</small>`));
+        box.append(make("div", "gpic", `${step.item.pic}${step.noNumbers ? "" : `<small>${g + 1}</small>`}`));
         const cs = make("div", "pcoins");
         for (let k = 0; k < step.k; k++) cs.append(coin(step.unit));
         box.append(cs);
@@ -93,7 +93,9 @@ globalThis.Player = (() => {
   /* ---- visual player: the same blocks move between steps ---- */
   const players = new Set();
   const STAGE_H = 430;
-  function player(host, steps, onEnd) {
+  /* opts.controlled: no top line and no arrows; the caller moves the picture with show(k). */
+  function player(host, steps, onEnd, opts = {}) {
+    const H = opts.height || STAGE_H;
     players.forEach((p) => p.host === host && players.delete(p));
     host.className = "vis";
     const uid = Math.random().toString(36).slice(2, 8);
@@ -101,6 +103,8 @@ globalThis.Player = (() => {
       <div class="tview" hidden></div>
       <div class="nav"><button class="prev" type="button" aria-label="Back">◀</button><button class="next" type="button" aria-label="Next">${NEXT_SVG}</button></div>`;
     const hint = host.querySelector(".hint"), eq = host.querySelector(".eq"), stage = host.querySelector(".stage"), lvl = host.querySelector(".lvl");
+    stage.style.height = H + "px";
+    host.querySelector(".tview").style.minHeight = H + "px";
     const arc = host.querySelector(".arc"), tview = host.querySelector(".tview"), prev = host.querySelector(".prev"), next = host.querySelector(".next");
     let i = 0, st = null, cur = null, held = -1;
 
@@ -117,15 +121,15 @@ globalThis.Player = (() => {
       if (mine.some((s) => s.interactive)) maxStack += 2;
       const rowRows = Math.ceil(sc.N / 10);
       const W = stage.clientWidth || 320;
-      let s, base = STAGE_H - 40, x0 = 0, laneH = 0, top = 0;
+      let s, base = H - 40, x0 = 0, laneH = 0, top = 0;
       if (sc.horiz) {
         /* Lanes: one row per frog. Names on the left, the jump goes to the right. */
         top = 36;
-        laneH = Math.min(84, (STAGE_H - top - 20) / maxTowers);
+        laneH = Math.min(84, (H - top - 20) / maxTowers);
         x0 = 92;
-        s = Math.min(26, laneH * 0.36, (W - x0 - 40) / (maxStack * 1.12), (W - 10) / 11.5, (STAGE_H - 90) / (rowRows * 1.15));
+        s = Math.min(26, laneH * 0.36, (W - x0 - 40) / (maxStack * 1.12), (W - 10) / 11.5, (H - 90) / (rowRows * 1.15));
       } else {
-        if (sc.who) base = STAGE_H - 92;
+        if (sc.who) base = H - 92;
         const room = base - 40 - (sc.rider ? 34 : 0);
         s = Math.min(36, (W / maxTowers) * 0.6, (W - 10) / 11.5, room / (Math.max(maxStack, rowRows) * 1.15));
       }
@@ -192,7 +196,7 @@ globalThis.Player = (() => {
             const by = yc + 6;
             t.forEach((id, k) => (pos[id] = [st.x0 + k * u, by - (id === st.lifted ? s * 0.8 : 0)]));
             label("lab side", 4, yc - 22, who ? who[ti].name : "", lc(ti));
-            label("lab side", 4, yc + 2, count(t, ti), lc(ti));
+            label("lab side", 4, yc + 2, step.hideLabels ? "?" : count(t, ti), lc(ti));
             const endX = st.x0 + (step.hideBlocks ? 0 : t.length * u);
             tip[ti] = [endX + 4, by + s / 2];
             if (riders[ti]) placeRider(riders[ti], endX - rs * 0.55, by - rs * 0.95);
@@ -202,7 +206,7 @@ globalThis.Player = (() => {
           towers.forEach((t, ti) => {
             const cx = colW * ti + colW / 2;
             t.forEach((id, k) => (pos[id] = [cx - s / 2, base - (k + 1) * u - (id === st.lifted ? s * 0.6 : 0)]));
-            if (t.length || step.labels) label("lab", cx, base + 4, count(t, ti), lc(ti));
+            if (t.length || step.labels) label("lab", cx, base + 4, step.hideLabels ? "?" : count(t, ti), lc(ti));
             if (who) label("who", cx, base + 34, `<span class="face">${who[ti].face || ""}</span>${who[ti].name}`, lc(ti));
             const topY = base - t.length * u;
             tip[ti] = [cx, topY - 6 - (riders[ti] ? rs : 0)];
@@ -238,7 +242,7 @@ globalThis.Player = (() => {
       } else {
         const per = 10, rows = Math.ceil(step.order.length / per), x0 = (W - per * u) / 2;
         step.order.forEach((id, j) => (pos[id] = [x0 + (j % per) * u, base - (rows - Math.floor(j / per)) * u]));
-        label("lab", W / 2, base + 4, String(step.rowLabel));
+        label("lab", W / 2, base + 4, step.hideLabels ? "?" : String(step.rowLabel));
         (step.notes || []).forEach((nt) => label("note" + (nt.red ? " red" : ""), W / 2, base - rows * u - 34, nt.text));
       }
       const delayStep = step.stagger ? Math.min(40, 1400 / blocks.length) : 0;
@@ -259,7 +263,7 @@ globalThis.Player = (() => {
           lvl.className = "lvl";
           lvl.style.cssText = `top:${base - line * u - st.g / 2 - 1}px`;
         }
-        lvl.firstChild.textContent = line + unit;
+        lvl.firstChild.textContent = step.hideLabels ? "?" : line + unit;
       }
     };
 
@@ -370,7 +374,11 @@ globalThis.Player = (() => {
       else if (onEnd) onEnd();
     });
     prev.addEventListener("click", () => i > 0 && show(i - 1));
-    const p = { host, redraw: () => { if (host.offsetParent && (steps[i].mode === "towers" || steps[i].mode === "row")) { st = null; show(i, false); } } };
+    if (opts.controlled) {
+      host.classList.add("controlled");
+      host.querySelector(".nav").hidden = true;
+    }
+    const p = { host, show: (k) => { if (k !== undefined && k !== i && steps[k]) show(k); }, redraw: () => { if (host.offsetParent && (steps[i].mode === "towers" || steps[i].mode === "row")) { st = null; show(i, false); } } };
     players.add(p);
     show(0);
     return p;

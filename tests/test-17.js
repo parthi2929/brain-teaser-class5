@@ -1,6 +1,6 @@
 /* Test 17, Data 1 (averages). 10 questions in book order. Also holds her own Test 17 answers. */
 (() => {
-  const E = globalThis.Engine, S = globalThis.Steps;
+  const E = globalThis.Engine, S = globalThis.Steps, W = globalThis.Work;
   const { int, pick, sum, generator, question } = E;
 
   const NAMES = ["Joan", "Artil", "Sandi", "Aoife", "Cian", "Niamh", "Liam", "Orla", "Sean", "Emma", "Conor", "Grace"];
@@ -52,13 +52,14 @@
     const answer = { max: Math.max(...all), min: Math.min(...all), home: sum(tb.home) / 4, away: sum(tb.away) / 4 }[ask];
     /* text includes the table, so a new table counts as a new question. */
     return question([TABLE_TEXT[ask]], "count", answer,
-      { text: `${TABLE_TEXT[ask]} [${tb.home} | ${tb.away}]`, table: tb, meta: { tb, ask }, vis: () => S.table(tb, [ask]) });
+      { text: `${TABLE_TEXT[ask]} [${tb.home} | ${tb.away}]`, table: tb, meta: { tb, ask },
+        work: () => W.table(tb, ask, { skin: "ball", who: tb[ask === "away" ? "away" : "home"].map((_, c) => ({ face: "🥅", name: "game " + ((ask === "away" ? 5 : 1) + c) })) }) });
   });
 
   const avg2 = generator("average-of-2", () => {
     const avg = int(4, 15), d = int(1, 4), l = [avg + d, avg - d];
     if (Math.random() < 0.5) l.reverse();
-    return question([`What is the average of ${l[0]} and ${l[1]}?`], "count", avg, { meta: { l }, vis: () => S.level(l) });
+    return question([`What is the average of ${l[0]} and ${l[1]}?`], "count", avg, { meta: { l }, work: () => W.average(l) });
   });
 
   const GENERATORS = [
@@ -66,24 +67,26 @@
     avg2,
     generator("stamps", () => {
       const l = nums(3, int(5, 12));
+      if (Math.min(...l) < 2) return null;
       const p = E.shuffle(NAMES).slice(0, 3);
       return question([`${p[0]} has ${l[0]} stamps, ${p[1]} has ${l[1]} and ${p[2]} has ${l[2]}. What is the average number of stamps?`],
-        "count", sum(l) / 3, { meta: { l }, vis: () => S.level(l, { ...STAMP, who: S.people(p) }) });
+        "count", sum(l) / 3, { meta: { l }, work: () => W.average(l, { ...STAMP, who: S.people(p) }, { many: "children" }) });
     }),
     generator("frogs", () => {
       const l = nums(3, int(4, 12));
       return question([`Frog A jumped ${l[0]}cm, Frog B jumped ${l[1]}cm and Frog C jumped ${l[2]}cm. What was the average distance jumped?`],
-        "count", sum(l) / 3, { post: "cm", meta: { l }, vis: () => S.level(l, FROGS) });
+        "count", sum(l) / 3, { post: "cm", meta: { l }, work: () => W.average(l, FROGS, { many: "frogs", unit: "cm" }) });
     }),
     generator("average-of-4", () => {
       const l = nums(4, int(4, 12)).sort((a, b) => a - b);
-      return question([`Find the average of ${andList(l)}.`], "count", sum(l) / 4, { meta: { l }, vis: () => S.level(l) });
+      return question([`Find the average of ${andList(l)}.`], "count", sum(l) / 4, { meta: { l }, work: () => W.average(l) });
     }),
     generator("total-cost", () => {
       const n = int(3, 8), avg = int(4, 12), thing = pick(Object.keys(THINGS));
       if (n === 5 && avg === 6) return null;
       return question([`The average cost of ${n} ${thing} is €${avg}. Find the total cost.`], "euro", n * avg * 100,
-        { meta: { n, avg }, vis: () => cdsVis(n, avg, thing) });
+        { meta: { n, avg }, work: () => W.total(n, avg, "€", "", thing, { skin: "coin",
+          who: Array.from({ length: n }, (_, k) => ({ face: THINGS[thing], name: thing.replace(/s$/, "") + " " + (k + 1) })) }) });
     }),
     tableGen("max"),
     tableGen("min"),

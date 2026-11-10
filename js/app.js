@@ -21,7 +21,97 @@
   /* ---- modal ---- */
   const modal = $("modal");
   const openVis = (steps) => { modal.hidden = false; P.play($("modal-vis"), steps); };
-  const closeVis = () => { modal.hidden = true; $("modal-vis").replaceChildren(); };
+  let afterClose = null;
+  const closeVis = () => {
+    modal.hidden = true;
+    $("modal-vis").replaceChildren();
+    if (afterClose) { const f = afterClose; afterClose = null; f(); }
+  };
+
+  /* ---- the 👀 helper: copybook working beside a picture ----
+     She fills the blanks of one line at a time; Check marks each blank. A right line shows the next line.
+     The last line ends with "?": she works it out and types it in the answer box. */
+  const fmtBlank = (kind, v) => (kind === "euro" ? (v / 100).toFixed(2) : String(v));
+  const openWork = (slot) => {
+    if (!slot.work) slot.work = { w: slot.q.work(), at: 0, given: {} };
+    const st = slot.work, { w } = st;
+    modal.hidden = false;
+    const host = $("modal-vis");
+    host.className = "workview";
+    host.replaceChildren();
+    const picHost = make("div", "wpic");
+    const list = make("ol", "wlines");
+    host.append(make("p", "wq", slot.q.text.replace(/ \[.*\]$/, "")), picHost, list);
+    const pic = P.play(picHost, w.steps, null, { controlled: true, height: 300 });
+    /* The helper screen has its final width only after layout: draw the picture again then. */
+    requestAnimationFrame(() => pic.redraw());
+
+    const renderLine = (line, k) => {
+      const li = make("li", "wline" + (line.say ? " say" : "") + (line.final !== undefined ? " final" : ""));
+      if (line.say) { li.textContent = line.say; return li; }
+      const blanks = [];
+      line.parts.forEach((p, j) => {
+        if (typeof p === "string") { li.append(document.createTextNode(p)); return; }
+        const key = k + ":" + j;
+        if (k < st.at) { li.append(make("span", "hand wdone", fmtBlank(p.kind, p.ask).replace(/^0\./, "0."))); return; }
+        const input = make("input", "wbox");
+        Object.assign(input, { type: "text", autocomplete: "off", inputMode: p.kind === "count" ? "numeric" : "decimal" });
+        input.setAttribute("aria-label", "Step " + (k + 1) + " blank " + (blanks.length + 1));
+        if (st.given[key]) input.value = st.given[key];
+        blanks.push({ input, p, key });
+        li.append(input);
+      });
+      if (k === st.at && blanks.length) {
+        const form = make("form", "wcheck");
+        form.noValidate = true;
+        const btn = make("button", "check", "Check");
+        btn.type = "submit";
+        const mark = make("span", "mark");
+        form.append(btn, mark);
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          let allRight = true;
+          blanks.forEach(({ input, p, key }) => {
+            const r = E.check({ kind: p.kind, answer: p.ask }, input.value);
+            if (r === "right") { input.classList.add("ok"); input.readOnly = true; st.given[key] = input.value; return; }
+            allRight = false;
+            input.classList.remove("bad");
+            void input.offsetWidth;
+            input.classList.add("bad");
+            input.value = "";
+          });
+          if (allRight) { st.at = k + 1; advance(); }
+          else {
+            mark.textContent = "✗";
+            const firstEmpty = blanks.find((b) => !b.input.readOnly);
+            if (firstEmpty) firstEmpty.input.focus();
+          }
+        });
+        blanks.forEach((b, j) => b.input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && j < blanks.length - 1 && !blanks[j + 1].input.readOnly) { e.preventDefault(); blanks[j + 1].input.focus(); }
+        }));
+        li.append(form);
+        setTimeout(() => (blanks.find((b) => !b.input.readOnly) || blanks[0]).input.focus(), 50);
+      }
+      if (line.final !== undefined && k === st.at) {
+        const go = make("button", "again", "Type it in the box ↓");
+        go.type = "button";
+        go.addEventListener("click", () => { afterClose = () => slot.ui.box.focus(); closeVis(); });
+        li.append(make("br"), go);
+      }
+      return li;
+    };
+    const advance = () => {
+      /* Rule lines need no answer: show them and move on. */
+      while (st.at < w.lines.length && w.lines[st.at].say) st.at++;
+      list.replaceChildren(...w.lines.slice(0, Math.min(st.at + 1, w.lines.length)).map(renderLine));
+      const cur = w.lines[Math.min(st.at, w.lines.length - 1)];
+      const prev = w.lines[st.at - 1];
+      pic.show(cur.pic ?? (prev && (prev.picDone ?? prev.pic)) ?? 0);
+      list.lastElementChild.scrollIntoView({ block: "nearest" });
+    };
+    advance();
+  };
   $("close").addEventListener("click", closeVis);
   modal.addEventListener("click", (e) => { if (e.target === modal) closeVis(); });
 
@@ -170,7 +260,7 @@
     const see = make("button", "see", "👀");
     see.type = "button";
     see.setAttribute("aria-label", "See how");
-    see.addEventListener("click", () => openVis(slot.q.vis()));
+    see.addEventListener("click", () => openWork(slot));
     form.append(before, box, after, check, mark, see);
     form.addEventListener("submit", (e) => { e.preventDefault(); onCheck(slot, index); });
     body.append(text, table, form);
