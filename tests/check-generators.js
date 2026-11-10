@@ -6,7 +6,7 @@ const vm = require("vm");
 
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const files = [...html.matchAll(/<script src="((?:js\/(?:engine|steps)|tests\/[^"]+)\.js)"><\/script>/g)].map((m) => m[1]);
+const files = [...html.matchAll(/<script src="((?:js\/(?:engine|steps)|topics\/[^"]+|tests\/[^"]+)\.js)"><\/script>/g)].map((m) => m[1]);
 const ctx = {};
 vm.createContext(ctx);
 files.forEach((f) => vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), ctx, { filename: f }));

@@ -1,6 +1,8 @@
 /* Shared question engine. It has no DOM code, so the Node check runs the same file.
 
-   A test file calls Engine.register({ id, title, generators }).
+   A topic file calls Engine.registerTopic({ id, title, learn }).
+     learn is { steps: () => [...] } for a lesson made of visual steps, or { page: "bags.html" } for a whole page.
+   A test file calls Engine.register({ id, title, topic, generators }); topic is the topic id.
    A generator is Engine.generator(type, make). make() returns a question, or null to try again.
    A question is Engine.question(parts, kind, answer, extra):
      parts   question text: strings and {n, d} fractions
@@ -52,7 +54,9 @@ globalThis.Engine = (() => {
     },
   });
 
+  const TOPICS = [];
   const TESTS = [];
+  const registerTopic = (topic) => TOPICS.push(topic);
   const register = (test) => TESTS.push(test);
 
   /* A new question for a slot. With prev, the words and the answer both change. */
@@ -104,7 +108,7 @@ globalThis.Engine = (() => {
   };
 
   return {
-    TESTS, register, generator, question, nextQuestion, check, readCents, readCount,
+    TOPICS, TESTS, registerTopic, register, generator, question, nextQuestion, check, readCents, readCount,
     int, pick, shuffle, sum, gcd, money, euro, frac,
   };
 })();

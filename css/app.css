@@ -230,3 +230,9 @@
   .bagframe { width: 100%; height: min(78vh, 680px); border: 0; border-radius: 10px; background: var(--bg); }
   .vis .tview:has(.bagframe) { min-height: 0; }
   .q.unsure .mark { color: var(--muted); }
+
+  /* Home: one block per topic */
+  .topic { margin-top: 1.1em; }
+  .topic h2 { margin: 0 0 0.3em; font-size: 1.1em; color: var(--muted); }
+  .topic .tiles { margin-top: 0; grid-template-columns: repeat(auto-fit, minmax(9em, 1fr)); }
+  .learnframe { height: min(86vh, 760px); margin-top: 0.6em; }

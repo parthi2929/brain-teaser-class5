@@ -157,5 +157,5 @@
     }),
   ];
 
-  E.register({ id: "test-26", title: "Test 26", topic: "Division and money", generators: GENERATORS });
+  E.register({ id: "test-26", title: "Test 26", topic: "division", generators: GENERATORS });
 })();

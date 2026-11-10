@@ -1,25 +1,11 @@
-/* Test 17, Data 1 (averages). 10 questions in book order. Also holds the Learn lesson and her answers. */
+/* Test 17, Data 1 (averages). 10 questions in book order. Also holds her own Test 17 answers. */
 (() => {
   const E = globalThis.Engine, S = globalThis.Steps;
   const { int, pick, sum, generator, question } = E;
 
   const NAMES = ["Joan", "Artil", "Sandi", "Aoife", "Cian", "Niamh", "Liam", "Orla", "Sean", "Emma", "Conor", "Grace"];
   const andList = (l) => l.slice(0, -1).join(", ") + " and " + l[l.length - 1];
-  const STAMP = {
-    skin: "stamp",
-    moveHint: "Average = share the stamps fairly until all have the same.",
-    doneHint: "Everyone has the same now. That is the average.",
-  };
-  const FROGS = {
-    horiz: true, rider: "🐸", skin: "cm", unit: "cm",
-    who: ["A", "B", "C"].map((x) => ({ name: "Frog " + x })),
-    moveHint: "Average jump = if all the frogs jumped the same.",
-    doneHint: "All jumps are the same now. That is the average jump.",
-  };
-  const THINGS = { CDs: "💿", books: "📕", games: "🎮", tickets: "🎟️" };
-  const cdsVis = (n, avg, thing) => S.total(n, avg, "€", "", thing, {
-    skin: "coin", who: Array.from({ length: n }, (_, k) => ({ face: THINGS[thing], name: thing.replace(/s$/, "") + " " + (k + 1) })),
-  });
+  const { STAMP, FROGS, THINGS, cds: cdsVis, BOOK_TABLE: BOOK } = S.pics;
 
   /* n whole numbers with the given average, not all the same. */
   const nums = (n, avg) => {
@@ -105,17 +91,8 @@
     tableGen("away"),
   ];
 
-  /* The Learn lesson and her Test 17 answers use the book's own numbers. */
-  const BOOK = { home: [5, 3, 2, 6], away: [4, 5, 1, 2] };
+  /* Her Test 17 answers use the book's own numbers. */
   const stampsBook = () => S.level([7, 11, 6], { ...STAMP, who: S.people(["Joan", "Artil", "Sandi"]) });
-  const learn = () => [
-    ...stampsBook(),
-    ...S.level([9, 5, 7], FROGS),
-    ...cdsVis(5, 6, "CDs"),
-    ...S.missing(9, 8, 12),
-    ...S.fromTotal(93, 3, "cm", "flowers", { rider: "🌷" }),
-    ...S.table(BOOK, ["max", "min"], true),
-  ];
 
-  E.register({ id: "test-17", title: "Test 17", topic: "Averages", generators: GENERATORS, learn });
+  E.register({ id: "test-17", title: "Test 17", topic: "averages", generators: GENERATORS });
 })();

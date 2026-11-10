@@ -203,5 +203,26 @@ globalThis.Steps = (() => {
     eq: "", hint: "",
   }];
 
-  return { B, money, people, level, total, missing, fromTotal, table, shareCoins, groupCoins, fractionOf, spentFromLeft, startFromLeft, bags };
+  /* ---------- picture presets for the averages stories ---------- */
+  const THINGS = { CDs: "💿", books: "📕", games: "🎮", tickets: "🎟️" };
+  const pics = {
+    THINGS,
+    STAMP: {
+      skin: "stamp",
+      moveHint: "Average = share the stamps fairly until all have the same.",
+      doneHint: "Everyone has the same now. That is the average.",
+    },
+    FROGS: {
+      horiz: true, rider: "🐸", skin: "cm", unit: "cm",
+      who: ["A", "B", "C"].map((x) => ({ name: "Frog " + x })),
+      moveHint: "Average jump = if all the frogs jumped the same.",
+      doneHint: "All jumps are the same now. That is the average jump.",
+    },
+    cds: (n, avg, thing) => total(n, avg, "€", "", thing, {
+      skin: "coin", who: Array.from({ length: n }, (_, k) => ({ face: THINGS[thing], name: thing.replace(/s$/, "") + " " + (k + 1) })),
+    }),
+    BOOK_TABLE: { home: [5, 3, 2, 6], away: [4, 5, 1, 2] },
+  };
+
+  return { pics, B, money, people, level, total, missing, fromTotal, table, shareCoins, groupCoins, fractionOf, spentFromLeft, startFromLeft, bags };
 })();

@@ -39,5 +39,5 @@
     }),
   ];
 
-  E.register({ id: "test-18", title: "Test 18", topic: "Averages", generators: GENERATORS });
+  E.register({ id: "test-18", title: "Test 18", topic: "averages", generators: GENERATORS });
 })();

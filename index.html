@@ -11,30 +11,10 @@
 <div class="page">
   <header>
     <h1 id="home-link">Brain Teaser</h1>
-    <button class="icon" id="gear" type="button" aria-label="Settings for the parent">⚙</button>
   </header>
-  <div class="gear-menu" id="gear-menu" hidden>
-    <div class="settings">
-      <label><input type="checkbox" id="opt-always"> Show the 👀 helper before a wrong answer</label>
-      <label><input type="checkbox" id="opt-same"> Keep the same question after a wrong answer</label>
-    </div>
-    <button type="button" data-go="home">Home</button>
-  </div>
 
   <section id="home">
-    <div class="tiles" id="tiles">
-      <button class="tile" type="button" data-go="learn">
-        <svg width="56" height="44" viewBox="0 0 56 44" aria-hidden="true">
-          <g stroke="rgba(0,0,0,.25)" stroke-width="1">
-            <rect x="4" y="30" width="12" height="12" rx="3" fill="#6b9cf0"/><rect x="4" y="16" width="12" height="12" rx="3" fill="#6b9cf0"/>
-            <rect x="22" y="30" width="12" height="12" rx="3" fill="#f39a4f"/><rect x="22" y="16" width="12" height="12" rx="3" fill="#6b9cf0"/>
-            <rect x="40" y="30" width="12" height="12" rx="3" fill="#b18ae6"/><rect x="40" y="16" width="12" height="12" rx="3" fill="#f39a4f"/>
-          </g>
-          <line x1="2" y1="14" x2="54" y2="14" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
-        </svg>
-        <span>Learn<small>What is an average?</small></span>
-      </button>
-    </div>
+    <div id="topics"></div>
   </section>
 
   <section id="learn" hidden></section>
@@ -56,12 +36,16 @@
   </div>
 </div>
 
-<!-- Engine and visual steps, then one file per test (the order here is the order on the home screen). -->
+<!-- Engine and visual steps, then the topics, then one file per test.
+     The order here is the order on the home screen. -->
 <script src="js/engine.js"></script>
 <script src="js/steps.js"></script>
+<script src="topics/division.js"></script>
+<script src="topics/averages.js"></script>
+<script src="tests/test-26.js"></script>
 <script src="tests/test-17.js"></script>
 <script src="tests/test-18.js"></script>
-<script src="tests/test-26.js"></script>
+<script src="js/records.js"></script>
 <script src="js/player.js"></script>
 <script src="js/app.js"></script>
 </body>

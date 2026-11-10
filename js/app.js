@@ -1,9 +1,9 @@
-/* The app: home screen, one practice page per test, the Learn lesson and her Test 17 answers.
+/* The app: home screen by topic, one Learn page per topic, one practice page per test, her Test 17 answers.
    Practice rules (same for every test):
    - the questions come in book order with new numbers; answers stay hidden
-   - a wrong answer shows ✗, then the slot gets a new question of the same type
-   - the 👀 helper for a slot appears only after a wrong answer in that slot
-   The parent can change the last two rules behind the gear. */
+   - a wrong answer shows ✗, then the same question stays and its 👀 helper appears
+   - new questions come only when she starts the test again
+   - every run is stored as a record (js/records.js) */
 (() => {
   const E = globalThis.Engine, P = globalThis.Player;
   const $ = (id) => document.getElementById(id);
@@ -15,14 +15,8 @@
   };
   const MARK_MS = 900;
 
-  /* ---- parent settings (stored in this browser only) ---- */
-  const load = (k) => { try { return localStorage.getItem(k) === "1"; } catch { return false; } };
-  const save = (k, v) => { try { localStorage.setItem(k, v ? "1" : "0"); } catch { /* private window */ } };
-  const opt = { always: load("bt-always"), same: load("bt-same") };
-  $("opt-always").checked = opt.always;
-  $("opt-same").checked = opt.same;
-  $("opt-always").addEventListener("change", (e) => { opt.always = e.target.checked; save("bt-always", opt.always); });
-  $("opt-same").addEventListener("change", (e) => { opt.same = e.target.checked; save("bt-same", opt.same); });
+  /* Admin settings arrive from the server later. Default: the helper waits for a wrong answer. */
+  const opt = { always: false };
 
   /* ---- modal ---- */
   const modal = $("modal");
@@ -31,24 +25,53 @@
   $("close").addEventListener("click", closeVis);
   modal.addEventListener("click", (e) => { if (e.target === modal) closeVis(); });
 
-  /* ---- home ---- */
-  E.TESTS.forEach((t) => {
-    const b = make("button", "tile alt", `<span>${t.title}<small>${t.topic}</small></span>`);
-    b.type = "button";
-    b.dataset.go = t.id;
-    $("tiles").append(b);
+  /* ---- home: one block per topic, Learn first, then its tests ---- */
+  const LEARN_ICON = `<svg width="44" height="34" viewBox="0 0 56 44" aria-hidden="true"><g stroke="rgba(0,0,0,.25)">
+    <rect x="4" y="30" width="12" height="12" rx="3" fill="#6b9cf0"/><rect x="4" y="16" width="12" height="12" rx="3" fill="#6b9cf0"/>
+    <rect x="22" y="30" width="12" height="12" rx="3" fill="#f39a4f"/><rect x="22" y="16" width="12" height="12" rx="3" fill="#6b9cf0"/>
+    <rect x="40" y="30" width="12" height="12" rx="3" fill="#b18ae6"/><rect x="40" y="16" width="12" height="12" rx="3" fill="#f39a4f"/></g></svg>`;
+  E.TOPICS.forEach((topic) => {
+    const tests = E.TESTS.filter((t) => t.topic === topic.id);
+    if (!tests.length && !topic.learn) return;
+    const block = make("section", "topic");
+    block.append(make("h2", "", topic.title));
+    const tiles = make("div", "tiles");
+    if (topic.learn) {
+      const b = make("button", "tile", `${LEARN_ICON}<span>Learn<small>${topic.learn.hint || ""}</small></span>`);
+      b.type = "button";
+      b.dataset.go = "learn:" + topic.id;
+      tiles.append(b);
+    }
+    tests.forEach((t) => {
+      const b = make("button", "tile alt", `<span>${t.title}</span>`);
+      b.type = "button";
+      b.dataset.go = t.id;
+      tiles.append(b);
+    });
+    block.append(tiles);
+    $("topics").append(block);
   });
   const SECTIONS = ["home", "learn", "practice", "her"];
-  const learnTest = E.TESTS.find((t) => t.learn);
   const herTest = E.TESTS.find((t) => t.her);
+  const showLearn = (topic) => {
+    $("home-link").textContent = topic.title;
+    if (topic.learn.page) {
+      const f = make("iframe", "bagframe learnframe");
+      f.src = topic.learn.page;
+      f.title = topic.title;
+      $("learn").className = "";
+      $("learn").replaceChildren(f);
+    } else P.play($("learn"), topic.learn.steps(), () => go("home"));
+  };
   const go = (where) => {
-    $("gear-menu").hidden = true;
+    if (current && current.run && !current.run.finishedAt && where !== current.test.id) current = null;
     const test = E.TESTS.find((t) => t.id === where);
-    const sec = test ? "practice" : where;
+    const topic = where.startsWith("learn:") && E.TOPICS.find((t) => "learn:" + t.id === where);
+    const sec = test ? "practice" : topic ? "learn" : where;
     SECTIONS.forEach((s) => ($(s).hidden = s !== sec));
     window.scrollTo(0, 0);
     if (test) startTest(test);
-    else if (where === "learn") { $("home-link").textContent = "Average"; P.play($("learn"), learnTest.learn(), () => go("home")); }
+    else if (topic) showLearn(topic);
     else if (where === "her") { $("home-link").textContent = "Her Test 17"; buildHer(); }
     else $("home-link").textContent = "Brain Teaser";
   };
@@ -57,10 +80,9 @@
     if (t) go(t.dataset.go);
   });
   $("home-link").addEventListener("click", () => go("home"));
-  $("gear").addEventListener("click", () => ($("gear-menu").hidden = !$("gear-menu").hidden));
 
   /* ---- practice ---- */
-  let slots = [], current = null;
+  let slots = [], current = null; /* current = { test, run } */
   const fractionNode = ({ n, d }) => {
     const el = make("span", "frac");
     el.setAttribute("role", "img");
@@ -86,7 +108,9 @@
     ui.see.hidden = !(opt.always || slot.hinted);
   };
   const finish = () => {
-    $("score-value").textContent = slots.filter((s) => s.firstTry).length + "/" + slots.length;
+    const score = slots.filter((s) => s.firstTry).length;
+    globalThis.Records.finish(current.run, score);
+    $("score-value").textContent = score + "/" + slots.length;
     $("score").hidden = false;
     $("score").scrollIntoView({ block: "center" });
   };
@@ -95,6 +119,7 @@
     if (slot.done || slot.busy) return;
     if (!ui.box.value.trim()) { ui.box.focus(); return; }
     const result = E.check(slot.q, ui.box.value);
+    if (result !== "unclear") globalThis.Records.attempt(current.run, index, ui.box.value.trim(), result);
     if (result === "right") {
       slot.done = true;
       ui.row.classList.add("done");
@@ -116,13 +141,8 @@
       ui.row.classList.remove("wrong", "unsure");
       ui.mark.textContent = "";
       if (wrong) {
+        /* Same question again; its helper appears. */
         slot.hinted = true;
-        if (!opt.same) {
-          slot.q = E.nextQuestion(slot.gen, slot.q);
-          ui.row.classList.remove("fresh");
-          void ui.row.offsetWidth;
-          ui.row.classList.add("fresh");
-        }
         showQ(slot);
         ui.see.classList.remove("nudge");
         void ui.see.offsetWidth;
@@ -160,13 +180,13 @@
     return row;
   };
   const startTest = (test) => {
-    current = test;
     $("home-link").textContent = test.title;
     slots = test.generators.map((gen) => ({ gen, q: E.nextQuestion(gen), done: false, busy: false, firstTry: true, hinted: false }));
+    current = { test, run: globalThis.Records.start(test, slots.map((s) => ({ type: s.gen.type, q: s.q }))) };
     $("plist").replaceChildren(...slots.map(buildRow));
     $("score").hidden = true;
   };
-  $("again").addEventListener("click", () => { startTest(current); window.scrollTo(0, 0); });
+  $("again").addEventListener("click", () => { startTest(current.test); window.scrollTo(0, 0); });
 
   /* ---- her Test 17 ---- */
   const buildHer = () => {
@@ -191,5 +211,5 @@
 
   /* Open a page from the address: index.html#learn, #test-26. */
   const start = location.hash.slice(1);
-  if (start && (SECTIONS.includes(start) || E.TESTS.some((t) => t.id === start))) go(start);
+  if (start && (SECTIONS.includes(start) || start.startsWith("learn:") || E.TESTS.some((t) => t.id === start))) go(start);
 })();
