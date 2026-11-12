@@ -15,6 +15,7 @@
     return e;
   };
   const MARK_MS = 900;
+  const NEXT_ARROW = '<svg width="34" height="28" viewBox="0 0 34 28" aria-hidden="true"><path d="M3 14h24M18 4l10 10-10 10" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   const settings = () => globalThis.Account.state.settings;
 
@@ -131,6 +132,12 @@
       b.dataset.go = "learn:" + topic.id;
       tiles.append(b);
     }
+    if (E.PRACTICE.some((p) => p.topic === topic.id)) {
+      const b = make("button", "tile qp", `<span>⚡ Quick practice<small>one sum at a time</small></span>`);
+      b.type = "button";
+      b.dataset.go = "qp:" + topic.id;
+      tiles.append(b);
+    }
     tests.forEach((t) => {
       const b = make("button", "tile alt", `<span>${t.title}</span>`);
       b.type = "button";
@@ -142,7 +149,7 @@
   }));
   renderHome();
   globalThis.Account.onChange(renderHome);
-  const SECTIONS = ["home", "learn", "practice", "account"];
+  const SECTIONS = ["home", "learn", "practice", "account", "quick"];
   const showLearn = (topic) => {
     $("home-link").textContent = topic.title;
     if (topic.learn.page) {
@@ -156,10 +163,15 @@
   const go = (where) => {
     const test = E.TESTS.find((t) => t.id === where);
     const topic = where.startsWith("learn:") && E.TOPICS.find((t) => "learn:" + t.id === where);
-    const sec = test ? "practice" : topic ? "learn" : where;
+    const qp = where.startsWith("qp:") && E.PRACTICE.find((p) => "qp:" + p.topic === where.split(":").slice(0, 2).join(":"));
+    const sec = test ? "practice" : topic ? "learn" : qp ? "quick" : where;
     SECTIONS.forEach((s) => ($(s).hidden = s !== sec));
     window.scrollTo(0, 0);
-    if (test) startTest(test);
+    if (qp) {
+      const typeId = where.split(":")[2];
+      const type = typeId && qp.types.find((t) => t.id === typeId);
+      if (type) startQuick(qp, type); else showQuickTypes(qp);
+    } else if (test) startTest(test);
     else if (topic) showLearn(topic);
     else $("home-link").textContent = "Brain Teaser";
   };
@@ -293,10 +305,113 @@
   };
   $("again").addEventListener("click", () => { startTest(current.test); window.scrollTo(0, 0); });
 
+  /* ---- Quick practice: one sum at a time, chosen by js/scheduler.js ---- */
+  const pools = {};
+  const poolOf = (type) => {
+    if (!pools[type.id]) {
+      const list = type.pool();
+      pools[type.id] = { keys: list.map(([n, d]) => n + "/" + d) };
+    }
+    return pools[type.id];
+  };
+  const rulesOf = (type) => ({ ...globalThis.Scheduler.DEFAULTS, ...((settings().practice || {})[type.id] || {}) });
+  const showQuickTypes = (qp) => {
+    const topic = E.TOPICS.find((t) => t.id === qp.topic);
+    $("home-link").textContent = (topic ? topic.title + ": " : "") + qp.title;
+    const tiles = make("div", "tiles qptypes");
+    qp.types.forEach((t) => {
+      const b = make("button", "tile alt", `<span>${t.title}<small>${t.example}</small></span>`);
+      b.type = "button";
+      b.dataset.go = `qp:${qp.topic}:${t.id}`;
+      tiles.append(b);
+    });
+    $("quick").replaceChildren(tiles);
+  };
+  let quick = null; /* { type, state, cur: { key, n, d, repeat }, right, wrong } */
+  const localKey = (type) => "bt-qp-" + type.id;
+  const loadState = async (type) => {
+    if (globalThis.Account.state.user) {
+      try { const r = await globalThis.Account.api("practice/" + type.id); if (r.state) return r.state; } catch { /* use a new state */ }
+      return globalThis.Scheduler.fresh();
+    }
+    try { return JSON.parse(localStorage.getItem(localKey(type))) || globalThis.Scheduler.fresh(); } catch { return globalThis.Scheduler.fresh(); }
+  };
+  const startQuick = async (qp, type) => {
+    $("home-link").textContent = type.title;
+    const box = $("quick");
+    box.replaceChildren(make("p", "", "…"));
+    const state = await loadState(type);
+    quick = { qp, type, state, right: 0, wrong: 0 };
+    const view = make("div", "qpview");
+    view.innerHTML = `
+      <div class="qpcount" id="qp-count"></div>
+      <form class="qpform" id="qp-form" novalidate>
+        <span class="qpsum" id="qp-sum"></span> =
+        <input class="box qpbox" id="qp-box" type="text" autocomplete="off" aria-label="Answer">
+        <button class="check" type="submit">Check</button>
+        <span class="mark" id="qp-mark" aria-live="polite"></span>
+      </form>
+      <p class="qpform-hint">${type.remainder ? "like 28 r 12" : ""}</p>
+      <div class="qpafter" id="qp-after" hidden>
+        <button class="see" id="qp-see" type="button" aria-label="See how">👀</button>
+        <button class="next" id="qp-next" type="button" aria-label="Next">${NEXT_ARROW}</button>
+      </div>`;
+    box.replaceChildren(view);
+    $("qp-form").addEventListener("submit", (e) => { e.preventDefault(); quickCheck(); });
+    $("qp-next").addEventListener("click", quickAsk);
+    $("qp-see").addEventListener("click", () => {
+      const { n, d } = quick.cur;
+      modal.hidden = false;
+      const f = make("iframe", "bagframe");
+      f.src = `bags.html?n=${n}&d=${d}&thing=apples&asks=bags&mode=try&nofinal=1`;
+      f.title = "Pack into bags";
+      $("modal-vis").className = "";
+      $("modal-vis").replaceChildren(f);
+    });
+    quickAsk();
+  };
+  const quickAsk = () => {
+    const { key, repeat } = globalThis.Scheduler.next(quick.state, poolOf(quick.type).keys, rulesOf(quick.type));
+    const [n, d] = key.split("/").map(Number);
+    quick.cur = { key, n, d, repeat, busy: false };
+    $("qp-sum").textContent = `${n} ÷ ${d}`;
+    $("qp-mark").textContent = "";
+    $("qp-after").hidden = true;
+    $("qp-form").classList.remove("done", "wrong");
+    const b = $("qp-box");
+    b.value = "";
+    b.readOnly = false;
+    b.focus();
+    $("qp-count").innerHTML = quick.right + quick.wrong ? `<b class="okc">✓ ${quick.right}</b> &nbsp; <b class="noc">✗ ${quick.wrong}</b>` : "";
+  };
+  const quickCheck = () => {
+    const c = quick.cur, b = $("qp-box");
+    if (c.busy || b.readOnly) return;
+    const result = E.checkDivision(c.n, c.d, b.value);
+    if (result === "unclear") { b.focus(); return; }
+    const ok = result === "right";
+    c.busy = true;
+    b.readOnly = true;
+    globalThis.Scheduler.answered(quick.state, c.key, ok, rulesOf(quick.type));
+    if (globalThis.Account.state.user) globalThis.Records.practice(quick.type.id, c.key, b.value.trim(), ok, c.repeat, quick.state);
+    else { try { localStorage.setItem(localKey(quick.type), JSON.stringify(quick.state)); } catch { /* private window */ } }
+    if (ok) {
+      quick.right++;
+      $("qp-mark").textContent = "✓";
+      $("qp-form").classList.add("done");
+      setTimeout(quickAsk, 800);
+    } else {
+      quick.wrong++;
+      $("qp-mark").textContent = "✗";
+      $("qp-form").classList.add("wrong");
+      $("qp-after").hidden = false;
+    }
+  };
+
   /* For browser checks: the current questions. */
-  globalThis.App = { slots: () => slots, go };
+  globalThis.App = { slots: () => slots, go, quick: () => quick };
 
   /* Open a page from the address: index.html#learn, #test-26. */
   const start = location.hash.slice(1);
-  if (start && (SECTIONS.includes(start) || start.startsWith("learn:") || E.TESTS.some((t) => t.id === start))) go(start);
+  if (start && (SECTIONS.includes(start) || start.startsWith("learn:") || start.startsWith("qp:") || E.TESTS.some((t) => t.id === start))) go(start);
 })();

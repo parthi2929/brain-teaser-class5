@@ -5,7 +5,13 @@
 const COOKIE = "bt_session";
 const SESSION_DAYS = 30;
 const GOOGLE_CERTS = "https://www.googleapis.com/oauth2/v3/certs";
-const DEFAULT_SETTINGS = { maxTries: 0, helper: "wrong", hiddenTests: [] };
+const DEFAULT_SETTINGS = { maxTries: 0, helper: "wrong", hiddenTests: [], practice: {} };
+/* Admin rules per quick-practice type (see public/js/scheduler.js). */
+const cleanRules = (r = {}) => {
+  const n = (v, lo, hi, d) => (Number.isFinite(Number(v)) ? Math.max(lo, Math.min(hi, Math.floor(Number(v)))) : d);
+  const gapMin = n(r.gapMin, 1, 200, 5);
+  return { noRepeat: n(r.noRepeat, 0, 500, 100), gapMin, gapMax: Math.max(gapMin, n(r.gapMax, 1, 200, 10)), rightTimes: n(r.rightTimes, 0, 10, 2) };
+};
 
 const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json", "cache-control": "no-store", ...headers } });
@@ -171,6 +177,32 @@ export async function onRequest(context) {
         .bind(nowIso(), Number(body.score), fin[1], s.sub).run();
       return r.meta.changes ? json({ ok: true }) : fail(404, "run not found");
     }
+    /* Quick practice: the saved scheduler state, then one call per answer. */
+    const pr = path.match(/^practice\/([\w-]{1,40})$/);
+    if (pr && method === "GET") {
+      const row = await env.DB.prepare("SELECT state FROM practice_state WHERE user_id = ?1 AND type = ?2").bind(s.sub, pr[1]).first();
+      return json({ state: row ? JSON.parse(row.state) : null });
+    }
+    if (pr && method === "POST") {
+      const type = pr[1], at = nowIso(), ok = body.ok ? 1 : 0;
+      const sum = String(body.sum).slice(0, 20), state = JSON.stringify(body.state ?? null);
+      if (state.length > 12000) return fail(400, "state too large");
+      const seen = await env.DB.prepare(`INSERT INTO practice_sums (user_id, type, sum, asked, wrong, last_at) VALUES (?1, ?2, ?3, 1, ?4, ?5)
+        ON CONFLICT DO UPDATE SET asked = asked + 1, wrong = wrong + ?4, last_at = ?5 RETURNING asked`)
+        .bind(s.sub, type, sum, 1 - ok, at).first();
+      const again = seen && seen.asked > 1 ? 1 : 0;
+      await env.DB.batch([
+        env.DB.prepare("INSERT INTO practice_attempts (user_id, type, sum, given, ok, repeat, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")
+          .bind(s.sub, type, sum, String(body.given).slice(0, 20), ok, body.repeat ? 1 : 0, at),
+        env.DB.prepare(`INSERT INTO practice_totals (user_id, type, asked, unique_sums, repeats, rights, wrong) VALUES (?1, ?2, 1, ?3, ?4, ?5, ?6)
+          ON CONFLICT DO UPDATE SET asked = asked + 1, unique_sums = unique_sums + ?3, repeats = repeats + ?4, rights = rights + ?5, wrong = wrong + ?6`)
+          .bind(s.sub, type, 1 - again, again, ok, 1 - ok),
+        env.DB.prepare(`INSERT INTO practice_state (user_id, type, state, updated_at) VALUES (?1, ?2, ?3, ?4)
+          ON CONFLICT DO UPDATE SET state = ?3, updated_at = ?4`).bind(s.sub, type, state, at),
+      ]);
+      return json({ ok: true });
+    }
+
     if (path === "progress" && method === "GET") {
       const runs = (await env.DB.prepare(RUNS_SQL + " WHERE r.user_id = ?1 ORDER BY r.started_at DESC LIMIT 30").bind(s.sub).all()).results;
       const weak = (await env.DB.prepare(`SELECT test_id, type, SUM(tries) AS tries, SUM(wrong) AS wrong FROM type_stats
@@ -181,20 +213,26 @@ export async function onRequest(context) {
     if (!admin) return fail(403, "admin only");
 
     if (path === "admin/overview" && method === "GET") {
-      const [users, runs, months] = await env.DB.batch([
+      const [users, runs, months, ptotals, pwrong] = await env.DB.batch([
         env.DB.prepare(`SELECT u.id, u.name, u.email, u.last_seen, (SELECT COUNT(*) FROM runs r WHERE r.user_id = u.id) AS runs
           FROM users u ORDER BY u.last_seen DESC LIMIT 50`),
         env.DB.prepare(RUNS_SQL + " ORDER BY r.started_at DESC LIMIT 50"),
         env.DB.prepare(`SELECT month, user_id, test_id, type, tries, wrong FROM type_stats
           WHERE wrong > 0 ORDER BY month DESC, wrong DESC LIMIT 200`),
+        env.DB.prepare("SELECT user_id, type, asked, unique_sums, repeats, rights, wrong FROM practice_totals ORDER BY user_id, type"),
+        env.DB.prepare(`SELECT user_id, type, sum, asked, wrong FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id, type ORDER BY wrong DESC, asked DESC) AS n
+          FROM practice_sums WHERE wrong > 0) WHERE n <= 5`),
       ]);
-      return json({ users: users.results, runs: runs.results, months: months.results, settings: await getSettings(env) });
+      return json({ users: users.results, runs: runs.results, months: months.results,
+        practice: { totals: ptotals.results, wrong: pwrong.results }, settings: await getSettings(env) });
     }
     if (path === "admin/settings" && method === "PUT") {
       const next = {
         maxTries: Math.max(0, Math.min(10, Math.floor(Number(body.maxTries) || 0))),
         helper: body.helper === "always" ? "always" : "wrong",
         hiddenTests: Array.isArray(body.hiddenTests) ? body.hiddenTests.map(String).slice(0, 50) : [],
+        practice: Object.fromEntries(Object.entries(body.practice || {}).slice(0, 50)
+          .filter(([k]) => /^[\w-]{1,40}$/.test(k)).map(([k, v]) => [k, cleanRules(v)])),
       };
       await env.DB.batch(Object.entries(next).map(([k, v]) =>
         env.DB.prepare("INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2").bind(k, JSON.stringify(v))));

@@ -23,5 +23,11 @@ globalThis.Records = (() => {
     run.finished = true;
     then(run, (id) => A().api(`runs/${id}/finish`, { method: "POST", body: { score } }));
   };
-  return { start, attempt, finish };
+  /* Quick practice: one call per answer, with the scheduler state. */
+  let practiceChain = Promise.resolve();
+  const practice = (type, sum, given, ok, repeat, state) => {
+    const body = { sum, given, ok, repeat, state: JSON.parse(JSON.stringify(state)) };
+    practiceChain = practiceChain.then(() => A().api("practice/" + type, { method: "POST", body }).catch(() => {}));
+  };
+  return { start, attempt, finish, practice };
 })();

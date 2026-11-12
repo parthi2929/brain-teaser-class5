@@ -56,7 +56,23 @@ globalThis.Engine = (() => {
 
   const TOPICS = [];
   const TESTS = [];
+  const PRACTICE = [];
   const registerTopic = (topic) => TOPICS.push(topic);
+  /* Quick practice: registerPractice({ topic, title, types: [{ id, title, example, remainder, pool }] }). */
+  const registerPractice = (p) => PRACTICE.push(p);
+
+  /* Reads a division answer: 28, 28 r 12, 28r12, 28 R 12, 28 rem 12, 28 remainder 12.
+     Returns { q, r }, or null when it is not that form. */
+  const readQR = (raw) => {
+    const m = String(raw).trim().toLowerCase().replace(/\s+/g, " ").match(/^(\d{1,4})(?: ?(?:r|rem|remainder) ?(\d{1,3}))?$/);
+    return m ? { q: Number(m[1]), r: m[2] === undefined ? 0 : Number(m[2]) } : null;
+  };
+  /* A sum N ÷ D: "right", "wrong" or "unclear". */
+  const checkDivision = (n, d, raw) => {
+    const a = readQR(raw);
+    if (!a) return "unclear";
+    return a.q === Math.floor(n / d) && a.r === n % d ? "right" : "wrong";
+  };
   const register = (test) => TESTS.push(test);
 
   /* A new question for a slot. With prev, the words and the answer both change. */
@@ -108,7 +124,7 @@ globalThis.Engine = (() => {
   };
 
   return {
-    TOPICS, TESTS, registerTopic, register, generator, question, nextQuestion, check, readCents, readCount,
+    TOPICS, TESTS, PRACTICE, registerTopic, register, registerPractice, readQR, checkDivision, generator, question, nextQuestion, check, readCents, readCount,
     int, pick, shuffle, sum, gcd, money, euro, frac,
   };
 })();

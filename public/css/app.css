@@ -281,3 +281,23 @@
   #account fieldset { border: 1px solid var(--line); border-radius: 8px; }
   .q.closed .mark { color: var(--wrong); }
   .q.closed .box { background: var(--wrong-soft); border-color: var(--wrong); }
+
+  /* Quick practice */
+  .tile.qp { background: var(--leaf-soft); color: var(--ink); border: 2px solid var(--leaf); }
+  .qpview { display: grid; justify-items: center; gap: 0.6em; margin-top: 1.5em; }
+  .qpcount { min-height: 1.4em; }
+  .qpcount .okc { color: var(--leaf); }
+  .qpcount .noc { color: var(--wrong); }
+  .qpform { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.4em; font-size: 1.6em; font-weight: 700; }
+  .qpsum { font-variant-numeric: tabular-nums; }
+  .qpbox { width: 5.5em; font-size: 0.8em; }
+  .qpform .check { font-size: 0.7em; }
+  .qpform.done .mark { color: var(--leaf); }
+  .qpform.done .qpbox { background: var(--leaf-soft); border-color: var(--leaf); }
+  .qpform.wrong .mark { color: var(--wrong); }
+  .qpform.wrong .qpbox { background: var(--wrong-soft); border-color: var(--wrong); animation: shake 0.4s; }
+  .qpform-hint { margin: 0; min-height: 1.2em; font-size: 0.75em; color: var(--muted); }
+  .qpafter { display: flex; gap: 1em; align-items: center; }
+  .qpafter .see { font-size: 1.5em; }
+  input.num { width: 4em; font: inherit; }
+  .note-small { font-size: 0.75em; color: var(--muted); }

@@ -157,17 +157,43 @@ globalThis.Account = (() => {
         </fieldset>
         <button class="check" type="submit">Save</button> <span id="settings-saved"></span>
       </form>
+      <h2>Quick practice</h2>
+      <div id="qp-admin"></div>
       <h2>Users</h2>
       ${table(["Name", "Email", "Tests", "Last seen"], d.users.map((u) => [esc(u.name), esc(u.email), u.runs, day(u.last_seen)]))}
       <h2>Recent tests</h2>
       ${table(["Day", "User", "Test", "Score"], d.runs.map((r) => [day(r.started_at), esc(names[r.user_id] || "?"), testTitle(r.test_id), scoreText(r)]))}
       <h2>Most wrong, by month</h2>
       ${table(["Month", "User", "Test", "Question type", "Wrong"], d.months.map((m) => [month(m.month), esc(names[m.user_id] || "?"), testTitle(m.test_id), typeName(m.type), `${m.wrong} of ${m.tries}`]))}`;
+    /* Quick practice: rules per type (saved with Settings) and what each user did. */
+    const S = globalThis.Scheduler;
+    const types = E.PRACTICE.flatMap((p) => p.types);
+    const rules = (id) => ({ ...S.DEFAULTS, ...((st.practice || {})[id] || {}) });
+    const num = (id, k, v) => `<input class="num" type="number" min="0" name="qp:${id}:${k}" value="${v}">`;
+    $("qp-admin").innerHTML =
+      table(["Type", "Sums", "No repeat within", "Wrong comes back after", "Until right"], types.map((t) => {
+        const r = rules(t.id);
+        return [`${t.title}<br><small>${t.example}</small>`, t.pool().length,
+          num(t.id, "noRepeat", r.noRepeat) + " questions", num(t.id, "gapMin", r.gapMin) + " to " + num(t.id, "gapMax", r.gapMax) + " questions",
+          num(t.id, "rightTimes", r.rightTimes) + " times"];
+      })) +
+      `<p class="note-small">0 in "Until right" stops wrong sums coming back on purpose. Save with the Save button above.</p>` +
+      table(["User", "Type", "Asked", "Unique", "Repeats", "Right", "Wrong", "Most wrong"], d.practice.totals.map((t) => {
+        const tt = types.find((x) => x.id === t.type);
+        const worst = d.practice.wrong.filter((w) => w.user_id === t.user_id && w.type === t.type)
+          .map((w) => `${w.sum.replace("/", " ÷ ")} (${w.wrong}✗)`).join(", ");
+        return [esc(names[t.user_id] || "?"), tt ? tt.title : t.type, t.asked, t.unique_sums, t.repeats, t.rights, t.wrong, worst];
+      }));
     const f = $("settings-form");
     f.addEventListener("submit", async (e) => {
       e.preventDefault();
       const shown = [...f.querySelectorAll('input[name="show"]:checked')].map((x) => x.value);
-      const body = { maxTries: Number(f.maxTries.value), helper: f.helper.value, hiddenTests: E.TESTS.map((t) => t.id).filter((id) => !shown.includes(id)) };
+      const practice = {};
+      box.querySelectorAll('input[name^="qp:"]').forEach((i) => {
+        const [, id, k] = i.name.split(":");
+        (practice[id] = practice[id] || {})[k] = Number(i.value);
+      });
+      const body = { maxTries: Number(f.maxTries.value), helper: f.helper.value, hiddenTests: E.TESTS.map((t) => t.id).filter((id) => !shown.includes(id)), practice };
       const r = await api("admin/settings", { method: "PUT", body });
       state.settings = r.settings;
       $("settings-saved").textContent = "Saved ✓";
