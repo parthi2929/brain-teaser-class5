@@ -109,6 +109,26 @@ wrongCheck(3, 3, 1);
 wrongCheck(8, 20, 3);
 wrongCheck(5, 10, 0);
 
+// 6. The long division helper (public/js/longdiv.js): for every sum, the steps end with the right quotient and
+//    remainder, each "?" cell count matches its answer, every cell is inside the grid, and × and − steps are right.
+vm.runInContext(fs.readFileSync(path.join(root, "js/longdiv.js"), "utf8"), ctx, { filename: "js/longdiv.js" });
+[1, 2].forEach((dd) => {
+  let sums = 0;
+  div.groups({ ...S.DEFAULTS, divisorDigits: dd }).flat().forEach(([n, d]) => {
+    const L = ctx.LongDiv.build(n, d);
+    sums++;
+    if (L.q !== Math.floor(n / d) || L.r !== n % d) fail(`longdiv ${n} ÷ ${d}: ${L.q} r ${L.r}`);
+    L.steps.forEach((s) => {
+      if (s.kind !== "ask") return;
+      if (!/^\d+$/.test(s.answer) || s.cells.length !== s.answer.length) fail(`longdiv ${n} ÷ ${d}: step "${s.q}" answer ${s.answer} in ${s.cells.length} cells`);
+      s.cells.forEach(({ r, c }) => { if (r < 0 || r >= L.rows || c < 0 || c >= L.cols) fail(`longdiv ${n} ÷ ${d}: cell ${r},${c} outside the grid`); });
+      const m = s.q.match(/^(\d+) × (\d+) = \?$/) || s.q.match(/^(\d+) − (\d+) = \?$/);
+      if (m && String(s.q.includes("×") ? m[1] * m[2] : m[1] - m[2]) !== s.answer) fail(`longdiv ${n} ÷ ${d}: "${s.q}" answer ${s.answer}`);
+    });
+  });
+  report.push(`long division helper, divisor digits ${dd}: ${sums} sums built and checked`);
+});
+
 console.log(report.join("\n"));
 if (failures) { console.log(`\nFAILED ${failures}`); process.exit(1); }
 console.log("\nALL PASSED");

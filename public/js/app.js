@@ -113,6 +113,13 @@
     advance();
   };
   $("close").addEventListener("click", closeVis);
+  /* The long division helper's OK button: close it and go back to the answer boxes. */
+  addEventListener("message", (e) => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== "helper-done" || modal.hidden) return;
+    closeVis();
+    const b = $("qp-box");
+    if (b && !b.closest("[hidden]")) b.focus();
+  });
   const onEscape = (e) => { if (e.key === "Escape" && !modal.hidden) { e.preventDefault(); closeVis(); } };
   document.addEventListener("keydown", onEscape);
   modal.addEventListener("load", (e) => {
@@ -356,8 +363,8 @@
       const { n, d } = quick.cur;
       modal.hidden = false;
       const f = make("iframe", "bagframe");
-      f.src = `bags.html?n=${n}&d=${d}&thing=apples&asks=bags&mode=try&nofinal=1`;
-      f.title = "Pack into bags";
+      f.src = `longdiv.html?n=${n}&d=${d}`;
+      f.title = "Long division, step by step";
       $("modal-vis").className = "";
       $("modal-vis").replaceChildren(f);
     });

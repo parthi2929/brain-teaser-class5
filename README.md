@@ -3,7 +3,7 @@
 Maths practice for a class 5 pupil in Ireland. It runs on Cloudflare Pages with a small API (Pages Functions) and a D1 database. Hosting setup: [SETUP.md](SETUP.md).
 
 - The home screen shows one block per topic: a Learn page first, then Quick practice (when the topic has it), then the topic's tests.
-- Quick practice: tapping it goes straight to a sum, one at a time: a 3-digit number ÷ a 1-digit number (171 ÷ 9), about half with a remainder. ✓ moves on; ✗ offers the Apple Bag helper (Try mode, no final answer) and a Next arrow; Escape closes the helper. Answers with a remainder use her copybook form, `52 r 3`. `js/scheduler.js` picks each sum: a sum does not come back within the last N questions (default 100), and a wrong sum comes back after 5 to 10 other questions until she gets it right 2 times. The admin changes these numbers, and can set "divisor digits" to 1 to 2.
+- Quick practice: tapping it goes straight to a sum, one at a time: a 3-digit number ÷ a 1-digit number (171 ÷ 9), about half with a remainder. ✓ moves on; ✗ offers the 👀 helper (`longdiv.html`): long division on a square grid, one cell at a time, where she enters each quotient digit, product, difference and brought-down digit; then a Next arrow. Escape closes the helper. Answers with a remainder use her copybook form, `52 r 3`. `js/scheduler.js` picks each sum: a sum does not come back within the last N questions (default 100), and a wrong sum comes back after 5 to 10 other questions until she gets it right 2 times. The admin changes these numbers, and can set "divisor digits" to 1 to 2.
 - Each test shows its questions in book order, with new numbers every time. The page never shows an answer.
 - A wrong answer shows ✗. The same question stays, and its 👀 helper appears. The helper is copybook working: the rule in words, then the sum, then one step at a time; she fills each step's number and Check marks it. The last step ends with "?": she types that answer in the box. A picture beside the working shows what each step means and never shows the final answer.
 - New questions come only when she starts the test again.
@@ -20,6 +20,7 @@ Maths practice for a class 5 pupil in Ireland. It runs on Cloudflare Pages with 
 | `js/engine.js` | Topic and test registry, question format, answer checking |
 | `js/steps.js` | Visual helpers as steps: towers of blocks, goals table, coins, coin groups, fraction bar, bags |
 | `js/player.js` | Draws the steps, one step per Next |
+| `longdiv.html`, `js/longdiv.js` | Quick practice helper: long division on a square grid, one step at a time (`longdiv.html?n=339&d=3`) |
 | `js/scheduler.js` | Quick practice: picks the next sum (no-repeat window, wrong sums back) |
 | `practice/<topic>.js` | One topic's quick-practice type: title, example, and `groups(rules)`, the lists of valid sums (each list has an equal chance) |
 | `js/work.js` | Copybook working for each question type (the 👀 helper) |
