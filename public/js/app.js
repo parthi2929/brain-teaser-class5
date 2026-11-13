@@ -340,11 +340,11 @@
       <div class="qpcount" id="qp-count"></div>
       <form class="qpform" id="qp-form" novalidate>
         <span class="qpsum" id="qp-sum"></span> =
-        <input class="box qpbox" id="qp-box" type="text" autocomplete="off" aria-label="Answer">
+        <input class="box qpbox" id="qp-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Answer">
+        ${type.remainder ? '<span class="qpr">r</span><input class="box qpbox qprbox" id="qp-r" type="text" inputmode="numeric" autocomplete="off" aria-label="Remainder">' : ""}
         <button class="check" type="submit">Check</button>
         <span class="mark" id="qp-mark" aria-live="polite"></span>
       </form>
-      <p class="qpform-hint">${type.remainder ? "like 28 r 12" : ""}</p>
       <div class="qpafter" id="qp-after" hidden>
         <button class="see" id="qp-see" type="button" aria-label="See how">👀</button>
         <button class="next" id="qp-next" type="button" aria-label="Next">${NEXT_ARROW}</button>
@@ -373,21 +373,23 @@
     $("qp-after").hidden = true;
     $("qp-form").classList.remove("done", "wrong");
     const b = $("qp-box");
-    b.value = "";
-    b.readOnly = false;
+    [b, $("qp-r")].forEach((x) => { if (x) { x.value = ""; x.readOnly = false; } });
     b.focus();
     renderCount();
   };
   const quickCheck = () => {
-    const c = quick.cur, b = $("qp-box");
+    const c = quick.cur, b = $("qp-box"), rb = $("qp-r");
     if (c.busy || b.readOnly) return;
-    const result = E.checkDivision(c.n, c.d, b.value);
+    /* 2 boxes: quotient and remainder; an empty remainder box counts as 0. */
+    const given = b.value.trim() + (rb && rb.value.trim() ? " r " + rb.value.trim() : "");
+    const result = b.value.trim() ? E.checkDivision(c.n, c.d, given) : "unclear";
     if (result === "unclear") { b.focus(); return; }
     const ok = result === "right";
     c.busy = true;
     b.readOnly = true;
+    if (rb) rb.readOnly = true;
     globalThis.Scheduler.answered(quick.state, c.key, ok, rulesOf(quick.type));
-    if (globalThis.Account.state.user) globalThis.Records.practice(quick.type.id, c.key, b.value.trim(), ok, c.repeat, quick.state);
+    if (globalThis.Account.state.user) globalThis.Records.practice(quick.type.id, c.key, given, ok, c.repeat, quick.state);
     else { try { localStorage.setItem(localKey(quick.type), JSON.stringify(quick.state)); } catch { /* private window */ } }
     if (ok) {
       quick.right++;

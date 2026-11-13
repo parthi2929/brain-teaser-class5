@@ -227,7 +227,7 @@
   .sw.spent { background: var(--c1); }
 
   /* Bags page inside the helper */
-  .bagframe { width: 100%; height: min(78vh, 680px); border: 0; border-radius: 10px; background: var(--bg); }
+  .bagframe { width: 100%; height: min(86vh, 760px); border: 0; border-radius: 10px; background: var(--bg); }
   .vis .tview:has(.bagframe) { min-height: 0; }
   .q.unsure .mark { color: var(--muted); }
 
@@ -301,3 +301,7 @@
   .qpafter .see { font-size: 1.5em; }
   input.num { width: 4em; font: inherit; }
   .note-small { font-size: 0.75em; color: var(--muted); }
+  .qpr { font-size: 0.8em; }
+  .qpbox.qprbox { width: 3.2em; }
+  .qpform.done .qprbox { background: var(--leaf-soft); border-color: var(--leaf); }
+  .qpform.wrong .qprbox { background: var(--wrong-soft); border-color: var(--wrong); }
