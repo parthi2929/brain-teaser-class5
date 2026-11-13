@@ -3,7 +3,7 @@
 Maths practice for a class 5 pupil in Ireland. It runs on Cloudflare Pages with a small API (Pages Functions) and a D1 database. Hosting setup: [SETUP.md](SETUP.md).
 
 - The home screen shows one block per topic: a Learn page first, then Quick practice (when the topic has it), then the topic's tests.
-- Quick practice: she picks a question type (for example 3-digit ÷ 1-digit) and gets one sum at a time. ✓ moves on; ✗ offers the Apple Bag helper (Try mode, no final answer) and a Next arrow. Answers with a remainder use her copybook form, `28 r 12`. `js/scheduler.js` picks each sum: a sum does not come back within the last N questions (default 100), and a wrong sum comes back after 5 to 10 other questions until she gets it right 2 times. The admin changes these numbers per type.
+- Quick practice: tapping it goes straight to a sum, one at a time: a 3-digit number ÷ a 1-digit number (171 ÷ 9), about half with a remainder. ✓ moves on; ✗ offers the Apple Bag helper (Try mode, no final answer) and a Next arrow; Escape closes the helper. Answers with a remainder use her copybook form, `52 r 3`. `js/scheduler.js` picks each sum: a sum does not come back within the last N questions (default 100), and a wrong sum comes back after 5 to 10 other questions until she gets it right 2 times. The admin changes these numbers, and can set "divisor digits" to 1 to 2.
 - Each test shows its questions in book order, with new numbers every time. The page never shows an answer.
 - A wrong answer shows ✗. The same question stays, and its 👀 helper appears. The helper is copybook working: the rule in words, then the sum, then one step at a time; she fills each step's number and Check marks it. The last step ends with "?": she types that answer in the box. A picture beside the working shows what each step means and never shows the final answer.
 - New questions come only when she starts the test again.
@@ -21,7 +21,7 @@ Maths practice for a class 5 pupil in Ireland. It runs on Cloudflare Pages with 
 | `js/steps.js` | Visual helpers as steps: towers of blocks, goals table, coins, coin groups, fraction bar, bags |
 | `js/player.js` | Draws the steps, one step per Next |
 | `js/scheduler.js` | Quick practice: picks the next sum (no-repeat window, wrong sums back) |
-| `practice/<topic>.js` | One topic's quick-practice types: title, example and the pool of all valid sums |
+| `practice/<topic>.js` | One topic's quick-practice type: title, example, and `groups(rules)`, the lists of valid sums (each list has an equal chance) |
 | `js/work.js` | Copybook working for each question type (the 👀 helper) |
 | `js/records.js` | One record per run, sent to the API |
 | `js/account.js` | Sign-in, user button, My progress, Admin |
@@ -44,9 +44,9 @@ Every topic has a Learn page.
 ## Add quick practice to a topic
 
 1. Copy `public/practice/division.js` to `public/practice/<topic>.js`.
-2. Call `E.registerPractice({ topic: "<topic id>", title: "Quick practice", types: [...] })`. Each type has `id`, `title`, `example`, `remainder` and `pool()`, which returns every valid sum.
+2. Call `E.registerPractice({ topic: "<topic id>", title: "Quick practice", types: [...] })`. A type has `id`, `title`, `example`, `remainder` and `groups(rules)`, which returns lists of valid sums; each list has an equal chance. The child sees the first type only.
 3. Add `<script src="practice/<topic>.js"></script>` to `index.html`, after the test files.
-4. Add the type's rules to `RULES` in `tests/check-practice.js` and run `node tests/check-practice.js`.
+4. Add checks for the type to `tests/check-practice.js` and run `node tests/check-practice.js`.
 
 Today the quick-practice screen and the answer check are written for division sums (`N ÷ D`); a new topic with another kind of sum also needs its own check in `js/engine.js`.
 

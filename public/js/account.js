@@ -171,9 +171,13 @@ globalThis.Account = (() => {
     const rules = (id) => ({ ...S.DEFAULTS, ...((st.practice || {})[id] || {}) });
     const num = (id, k, v) => `<input class="num" type="number" min="0" name="qp:${id}:${k}" value="${v}">`;
     $("qp-admin").innerHTML =
-      table(["Type", "Sums", "No repeat within", "Wrong comes back after", "Until right"], types.map((t) => {
+      table(["Type", "Divisor digits", "Sums", "No repeat within", "Wrong comes back after", "Until right"], types.map((t) => {
         const r = rules(t.id);
-        return [`${t.title}<br><small>${t.example}</small>`, t.pool().length,
+        const sums = t.groups(r).map((g) => g.length);
+        const digits = `<select name="qp:${t.id}:divisorDigits"><option value="1"${r.divisorDigits === 2 ? "" : " selected"}>1</option>` +
+          `<option value="2"${r.divisorDigits === 2 ? " selected" : ""}>1 to 2</option></select>`;
+        return [`${t.title}<br><small>${t.example}</small>`, digits,
+          `${sums.reduce((a, b) => a + b, 0)}<br><small>${sums.join(" + ")}</small>`,
           num(t.id, "noRepeat", r.noRepeat) + " questions", num(t.id, "gapMin", r.gapMin) + " to " + num(t.id, "gapMax", r.gapMax) + " questions",
           num(t.id, "rightTimes", r.rightTimes) + " times"];
       })) +
@@ -189,7 +193,7 @@ globalThis.Account = (() => {
       e.preventDefault();
       const shown = [...f.querySelectorAll('input[name="show"]:checked')].map((x) => x.value);
       const practice = {};
-      box.querySelectorAll('input[name^="qp:"]').forEach((i) => {
+      box.querySelectorAll('input[name^="qp:"], select[name^="qp:"]').forEach((i) => {
         const [, id, k] = i.name.split(":");
         (practice[id] = practice[id] || {})[k] = Number(i.value);
       });

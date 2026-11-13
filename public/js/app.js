@@ -113,6 +113,11 @@
     advance();
   };
   $("close").addEventListener("click", closeVis);
+  const onEscape = (e) => { if (e.key === "Escape" && !modal.hidden) { e.preventDefault(); closeVis(); } };
+  document.addEventListener("keydown", onEscape);
+  modal.addEventListener("load", (e) => {
+    if (e.target.tagName === "IFRAME") { try { e.target.contentWindow.addEventListener("keydown", onEscape); } catch { /* other origin */ } }
+  }, true);
   modal.addEventListener("click", (e) => { if (e.target === modal) closeVis(); });
 
   /* ---- home: one block per topic, Learn first, then its tests ---- */
@@ -167,11 +172,8 @@
     const sec = test ? "practice" : topic ? "learn" : qp ? "quick" : where;
     SECTIONS.forEach((s) => ($(s).hidden = s !== sec));
     window.scrollTo(0, 0);
-    if (qp) {
-      const typeId = where.split(":")[2];
-      const type = typeId && qp.types.find((t) => t.id === typeId);
-      if (type) startQuick(qp, type); else showQuickTypes(qp);
-    } else if (test) startTest(test);
+    if (qp) startQuick(qp, qp.types[0]); /* one type per topic for now: she never chooses */
+    else if (test) startTest(test);
     else if (topic) showLearn(topic);
     else $("home-link").textContent = "Brain Teaser";
   };
@@ -306,26 +308,16 @@
   $("again").addEventListener("click", () => { startTest(current.test); window.scrollTo(0, 0); });
 
   /* ---- Quick practice: one sum at a time, chosen by js/scheduler.js ---- */
-  const pools = {};
-  const poolOf = (type) => {
-    if (!pools[type.id]) {
-      const list = type.pool();
-      pools[type.id] = { keys: list.map(([n, d]) => n + "/" + d) };
-    }
-    return pools[type.id];
+  /* The sums as keys "171/9", in the type's groups (for division: without and with a remainder). */
+  const groupKeys = {};
+  const groupsOf = (type, rules) => {
+    const id = type.id + ":" + rules.divisorDigits;
+    groupKeys[id] ||= type.groups(rules).map((g) => g.map(([n, d]) => n + "/" + d));
+    return groupKeys[id];
   };
   const rulesOf = (type) => ({ ...globalThis.Scheduler.DEFAULTS, ...((settings().practice || {})[type.id] || {}) });
-  const showQuickTypes = (qp) => {
-    const topic = E.TOPICS.find((t) => t.id === qp.topic);
-    $("home-link").textContent = (topic ? topic.title + ": " : "") + qp.title;
-    const tiles = make("div", "tiles qptypes");
-    qp.types.forEach((t) => {
-      const b = make("button", "tile alt", `<span>${t.title}<small>${t.example}</small></span>`);
-      b.type = "button";
-      b.dataset.go = `qp:${qp.topic}:${t.id}`;
-      tiles.append(b);
-    });
-    $("quick").replaceChildren(tiles);
+  const renderCount = () => {
+    $("qp-count").innerHTML = quick.right + quick.wrong ? `<b class="okc">✓ ${quick.right}</b> &nbsp; <b class="noc">✗ ${quick.wrong}</b>` : "";
   };
   let quick = null; /* { type, state, cur: { key, n, d, repeat }, right, wrong } */
   const localKey = (type) => "bt-qp-" + type.id;
@@ -337,7 +329,8 @@
     try { return JSON.parse(localStorage.getItem(localKey(type))) || globalThis.Scheduler.fresh(); } catch { return globalThis.Scheduler.fresh(); }
   };
   const startQuick = async (qp, type) => {
-    $("home-link").textContent = type.title;
+    const topic = E.TOPICS.find((t) => t.id === qp.topic);
+    $("home-link").textContent = (topic ? topic.title : type.title) + " ⚡";
     const box = $("quick");
     box.replaceChildren(make("p", "", "…"));
     const state = await loadState(type);
@@ -371,7 +364,8 @@
     quickAsk();
   };
   const quickAsk = () => {
-    const { key, repeat } = globalThis.Scheduler.next(quick.state, poolOf(quick.type).keys, rulesOf(quick.type));
+    const rules = rulesOf(quick.type);
+    const { key, repeat } = globalThis.Scheduler.next(quick.state, groupsOf(quick.type, rules), rules);
     const [n, d] = key.split("/").map(Number);
     quick.cur = { key, n, d, repeat, busy: false };
     $("qp-sum").textContent = `${n} ÷ ${d}`;
@@ -382,7 +376,7 @@
     b.value = "";
     b.readOnly = false;
     b.focus();
-    $("qp-count").innerHTML = quick.right + quick.wrong ? `<b class="okc">✓ ${quick.right}</b> &nbsp; <b class="noc">✗ ${quick.wrong}</b>` : "";
+    renderCount();
   };
   const quickCheck = () => {
     const c = quick.cur, b = $("qp-box");
@@ -397,11 +391,13 @@
     else { try { localStorage.setItem(localKey(quick.type), JSON.stringify(quick.state)); } catch { /* private window */ } }
     if (ok) {
       quick.right++;
+      renderCount();
       $("qp-mark").textContent = "✓";
       $("qp-form").classList.add("done");
       setTimeout(quickAsk, 800);
     } else {
       quick.wrong++;
+      renderCount();
       $("qp-mark").textContent = "✗";
       $("qp-form").classList.add("wrong");
       $("qp-after").hidden = false;

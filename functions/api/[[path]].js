@@ -10,7 +10,8 @@ const DEFAULT_SETTINGS = { maxTries: 0, helper: "wrong", hiddenTests: [], practi
 const cleanRules = (r = {}) => {
   const n = (v, lo, hi, d) => (Number.isFinite(Number(v)) ? Math.max(lo, Math.min(hi, Math.floor(Number(v)))) : d);
   const gapMin = n(r.gapMin, 1, 200, 5);
-  return { noRepeat: n(r.noRepeat, 0, 500, 100), gapMin, gapMax: Math.max(gapMin, n(r.gapMax, 1, 200, 10)), rightTimes: n(r.rightTimes, 0, 10, 2) };
+  return { noRepeat: n(r.noRepeat, 0, 500, 100), gapMin, gapMax: Math.max(gapMin, n(r.gapMax, 1, 200, 10)), rightTimes: n(r.rightTimes, 0, 10, 2),
+    divisorDigits: Number(r.divisorDigits) === 2 ? 2 : 1 };
 };
 
 const json = (data, status = 200, headers = {}) =>

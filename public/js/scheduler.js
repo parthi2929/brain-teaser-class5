@@ -7,28 +7,33 @@
              due  = come back when count reaches this
              need = right answers needed before the sum stops coming back
              got  = right answers so far since the last wrong answer
-   rules (admin, per type): noRepeat, gapMin, gapMax, rightTimes. */
+   rules (admin, per type): noRepeat, gapMin, gapMax, rightTimes, divisorDigits (division only: 1, or 2 for 1 to 2). */
 globalThis.Scheduler = (() => {
-  const DEFAULTS = { noRepeat: 100, gapMin: 5, gapMax: 10, rightTimes: 2 };
+  const DEFAULTS = { noRepeat: 100, gapMin: 5, gapMax: 10, rightTimes: 2, divisorDigits: 1 };
   const fresh = () => ({ count: 0, recent: [], wrong: {} });
   const rnd = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
 
-  /* Returns { key, repeat } for the next question. */
-  const next = (state, keys, rules, rng = Math.random) => {
+  /* Returns { key, repeat } for the next question.
+     groups: lists of keys; each list has an equal chance (for example: sums without and with a remainder). */
+  const next = (state, groups, rules, rng = Math.random) => {
     const r = { ...DEFAULTS, ...rules };
     /* 1. A sum she got wrong whose turn has come (the earliest first). */
     const due = Object.entries(state.wrong).filter(([, w]) => w.due <= state.count).sort((a, b) => a[1].due - b[1].due);
     if (due.length) return { key: due[0][0], repeat: true };
     /* 2. A random sum that was not among the last noRepeat questions. With a small pool, the window shrinks. */
-    const window = Math.min(r.noRepeat, keys.length - 1);
+    const size = groups.reduce((s, g) => s + g.length, 0);
+    const window = Math.min(r.noRepeat, size - 1);
     const blocked = new Set(state.recent.slice(Math.max(0, state.recent.length - window)));
     Object.keys(state.wrong).forEach((k) => blocked.add(k)); /* it comes back on its own turn */
-    for (let i = 0; i < 50; i++) {
-      const k = keys[rnd(rng, 0, keys.length - 1)];
+    for (let i = 0; i < 60; i++) {
+      const g = groups[rnd(rng, 0, groups.length - 1)];
+      const k = g[rnd(rng, 0, g.length - 1)];
       if (!blocked.has(k)) return { key: k, repeat: false };
     }
-    const open = keys.filter((k) => !blocked.has(k));
-    return { key: (open.length ? open : keys)[rnd(rng, 0, (open.length ? open : keys).length - 1)], repeat: false };
+    const all = groups.flat();
+    const open = all.filter((k) => !blocked.has(k));
+    const from = open.length ? open : all;
+    return { key: from[rnd(rng, 0, from.length - 1)], repeat: false };
   };
 
   /* Updates the state after an answer to `key`. */
