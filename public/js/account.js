@@ -38,6 +38,12 @@ globalThis.Account = (() => {
 
   /* ---------- load ---------- */
   const load = async () => {
+    if (document.documentElement.dataset.hosting === 'static') {
+      state.online = false;
+      renderButton();
+      listeners.forEach(f => f(state));
+      return;
+    }
     try {
       const [me, config] = await Promise.all([api("me"), state.online ? Promise.resolve(state.config) : api("config")]);
       Object.assign(state, { user: me.user, admin: me.admin, settings: { ...state.settings, ...me.settings }, config, online: true });

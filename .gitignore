@@ -4,3 +4,6 @@
 node_modules/
 # Kept out of the public repo until the parent decides
 private/
+
+# Generated GitHub Pages artifact
+dist/
