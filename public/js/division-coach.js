@@ -23,14 +23,14 @@ globalThis.DivisionCoach = (() => {
       const comparison = (partial, prefix) => ({ divisor: d, partial, prefix, source: s.source });
       if (help.mode === 'fit') {
         const partial = s.probes[help.probe];
-        return { ...base, boolean: true, text: (help.probe ? `Let's take ${partial}. ` : '') + `Can ${d} go into ${partial}?`, annotation: comparison(partial, true) };
+        return { ...base, boolean: true, text: (help.probe ? `Let's take ${partial}. ` : '') + `Can one whole group of ${d} fit into ${partial}?`, annotation: comparison(partial, true) };
       }
       if (help.mode === 'multiple') return { ...base, text: `How many groups of ${d} fit into ${s.current}? Use the largest whole number that fits. Write it anywhere on the sheet.`, annotation: comparison(s.current, true) };
       if (help.mode === 'trial-product') return { ...base, text: `Let's check your multiple. What is ${help.guess} × ${d}? Write the product on the sheet.`, annotation: comparison(s.current, true) };
-      if (help.mode === 'trial-fit') return { ...base, boolean: true, text: `Does ${help.product} fit into ${s.current}?`, annotation: { left: help.product, right: s.current } };
-      if (help.mode === 'trial-more') return { ...base, boolean: true, text: `Can one more group of ${d} fit into ${s.current}?`, annotation: { left: help.product, right: s.current } };
+      if (help.mode === 'trial-fit') return { ...base, boolean: true, text: `Can you take ${help.product} away from ${s.current}?`, annotation: { left: help.product, right: s.current } };
+      if (help.mode === 'trial-more') return { ...base, boolean: true, text: `You have ${help.product}. Can you add one more group of ${d} and stay at ${s.current} or less?`, annotation: { left: help.product, right: s.current } };
       if (help.mode === 'groups') return { ...base, text: help.count === 0 ? `Zero groups of ${d}. How many is that? Write it on the sheet.` : help.count === 1 ? `One group of ${d}. How many is that? Write it on the sheet.` : `You counted ${(help.count - 1) * d}. Add one more group of ${d}. How much now? Write it on the sheet.`, annotation: { groups: help.count, divisor: d } };
-      if (help.mode === 'subtract-fit') return { ...base, boolean: true, text: `Does ${s.product} fit into ${s.current}?`, annotation: { left: s.product, right: s.current } };
+      if (help.mode === 'subtract-fit') return { ...base, boolean: true, text: `Can you take ${s.product} away from ${s.current}?`, annotation: { left: s.product, right: s.current } };
       if (help.mode === 'difference') return { ...base, text: `Count up from ${s.product} to ${s.current}. How many more? Write the difference on the sheet.`, annotation: { left: s.product, right: s.current } };
       return { ...base, text: 'Look at the marked digit in the question. Bring it down to any square on your sheet.', annotation: { source: s.source, down: true } };
     };
