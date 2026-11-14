@@ -192,7 +192,8 @@ globalThis.DivisionSheet = (() => {
         cells.forEach(el => { if (Number(el.dataset.row) === 1 && Number(el.dataset.col) >= c0) el.classList.remove('look'); });
         for (let c = c0; c < c0 + length; c++) cells[key(1, c)].classList.add('look');
       }
-    } else if (a.left !== undefined) { chip(a.left); comparison.append(doc.createTextNode('→')); chip(a.right); }
+    } else if (a.minuend !== undefined) { chip(a.minuend); comparison.append(doc.createTextNode('−')); chip(a.subtrahend); comparison.append(doc.createTextNode('= ?')); }
+    else if (a.left !== undefined) { chip(a.left); comparison.append(doc.createTextNode('→')); chip(a.right); }
     else if (a.groups !== undefined) { chip(a.groups); comparison.append(doc.createTextNode('groups of')); chip(a.divisor); }
     else if (a.down) cells[key(1, c0 + a.source)].classList.add('look');
   };
