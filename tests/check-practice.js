@@ -6,7 +6,7 @@ const vm = require("vm");
 
 const root = path.join(__dirname, "..", "public");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const files = [...html.matchAll(/<script src="((?:js\/(?:engine|scheduler)|practice\/[^"]+)\.js)"><\/script>/g)].map((m) => m[1]);
+const files = [...html.matchAll(/<script src="((?:js\/(?:engine|scheduler)|practice\/[^"?]+)\.js)(?:\?[^"\s]*)?"><\/script>/g)].map((m) => m[1]);
 const ctx = {};
 vm.createContext(ctx);
 files.forEach((f) => vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), ctx, { filename: f }));
@@ -119,7 +119,8 @@ vm.runInContext(fs.readFileSync(path.join(root, "js/longdiv.js"), "utf8"), ctx, 
     sums++;
     if (L.q !== Math.floor(n / d) || L.r !== n % d) fail(`longdiv ${n} ÷ ${d}: ${L.q} r ${L.r}`);
     L.steps.forEach((s) => {
-      if (s.kind !== "ask") return;
+      if (s.kind !== "ask") { fail(`longdiv ${n} ÷ ${d}: unsolicited hint step`); return; }
+      if (/does not go into|Use \d|How many \d+s in/.test(s.q)) fail(`longdiv ${n} ÷ ${d}: starting-number hint exposed`);
       if (!/^\d+$/.test(s.answer) || s.cells.length !== s.answer.length) fail(`longdiv ${n} ÷ ${d}: step "${s.q}" answer ${s.answer} in ${s.cells.length} cells`);
       s.cells.forEach(({ r, c }) => { if (r < 0 || r >= L.rows || c < 0 || c >= L.cols) fail(`longdiv ${n} ÷ ${d}: cell ${r},${c} outside the grid`); });
       const m = s.q.match(/^(\d+) × (\d+) = \?$/) || s.q.match(/^(\d+) − (\d+) = \?$/);

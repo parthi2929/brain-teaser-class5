@@ -7,6 +7,8 @@
    The admin settings (js/account.js) set: tries per question, when the helper appears, which tests show. */
 (() => {
   const E = globalThis.Engine, P = globalThis.Player;
+  const initialRoute = location.hash.slice(1);
+  let navigated = false;
   const $ = (id) => document.getElementById(id);
   const make = (tag, cls, html) => {
     const e = document.createElement(tag);
@@ -173,6 +175,8 @@
     } else P.play($("learn"), topic.learn.steps(), () => go("home"));
   };
   const go = (where) => {
+    navigated = true;
+    history.replaceState(null, '', location.pathname + location.search + (where === 'home' ? '' : '#' + where));
     const test = E.TESTS.find((t) => t.id === where);
     const topic = where.startsWith("learn:") && E.TOPICS.find((t) => "learn:" + t.id === where);
     const qp = where.startsWith("qp:") && E.PRACTICE.find((p) => "qp:" + p.topic === where.split(":").slice(0, 2).join(":"));
@@ -206,6 +210,100 @@
       <tr><td>Goals scored in away games</td>${tb.away.map((v) => `<td>${v}</td>`).join("")}</tr>`;
     return t;
   };
+  const askWorksheet = frame => {
+    if (frame?.sheet) frame.sheet.help();
+  };
+  const makeWorksheet = (n, d, title = 'Division worksheet', unit = '') => {
+    const frame = make('div', 'division-working');
+    frame.setAttribute('role','group'); frame.setAttribute('aria-label',title);
+    frame.loadingNote = make('p', 'worksheet-loading');
+    const message = make('span', '', 'Starting worksheet…');
+    message.setAttribute('role','status');
+    const retry = make('button','small','Retry'); retry.type='button';
+    frame.loadingNote.append(message,retry);
+    frame.start = () => {
+      frame.sheet?.destroy();
+      const started=performance.now();
+      try {
+        frame.sheet = globalThis.DivisionSheet.mount(frame, {
+          n,d,unit,
+          onReviewed: data => onWorksheetMessage(frame,data),
+          onDone: answer => onWorksheetMessage(frame,{type:'division-working-done',answer})
+        });
+        frame.dataset.ready='true'; frame.dataset.startupMs=String(performance.now()-started);
+        frame.loadingNote.hidden=true;
+      } catch(error) {
+        frame.dataset.ready='false'; frame.loadingNote.hidden=false;
+        message.textContent='The worksheet could not start.';
+        console.error('Worksheet startup failed',error);
+      }
+    };
+    retry.addEventListener('click',frame.start);
+    return frame;
+  };
+  const divisionFor = slot => {
+    const m = slot.q.meta;
+    if (['how-many-boxes', 'remainder', 'bags-of-tens'].includes(slot.gen.type)) return [m.total, m.d];
+    if (slot.gen.type === 'cost-of-one') return [m.total, m.n];
+    if (slot.gen.type === 'how-many-for-money') return [m.total, m.price];
+    if (slot.gen.type === 'halve-money') return [m.total, 2];
+    return null;
+  };
+  const showWorksheet = slot => {
+    const nums = divisionFor(slot), panel = $('test-working');
+    panel.hidden = !nums;
+    if (!nums) return;
+    if (!slot.worksheet) {
+      const unit=['cost-of-one','how-many-for-money','halve-money'].includes(slot.gen.type)?'cents':'';
+      slot.worksheet = makeWorksheet(...nums, 'Working for question ' + (slots.indexOf(slot) + 1),unit);
+      $('test-sheets').append(slot.worksheet.loadingNote, slot.worksheet);
+      slot.worksheet.start();
+    }
+    slots.forEach(s => { if (s.worksheet) { s.worksheet.hidden = s !== slot; s.worksheet.loadingNote.hidden = s !== slot || s.worksheet.dataset.ready === 'true'; } });
+    $('test-working-title').textContent = 'Working · Question ' + (slots.indexOf(slot) + 1);
+    $('test-working-question').textContent = slot.q.text;
+  };
+  const onWorksheetMessage = (frame,data) => {
+    const qp=$('qp-working');
+    const slot=slots.find(s=>s.worksheet===frame);
+    if (data.type === 'division-working-reviewed') {
+      if (frame !== qp || qp.closest('[hidden]') || !quick || quick.cur.busy) return;
+      const box=$('qp-box'), remainder=$('qp-r');
+      [box,remainder].forEach(input=>{ if(input) { input.classList.remove('answer-review-error','answer-review-dependent'); input.removeAttribute('aria-invalid'); } });
+      if (!data.complete) { if ($('qp-mark').dataset.working) { $('qp-mark').textContent=''; delete $('qp-mark').dataset.working; } return; }
+      const answer=data.answer || frame.sheet.answer();
+      if (!answer || E.checkDivision(quick.cur.n,quick.cur.d,answer.q+' r '+answer.r)!=='right') return;
+      box.value=String(answer.q);
+      if(remainder) remainder.value=String(answer.r);
+      quickCheck(true);
+      return;
+    }
+    if (data.type !== 'division-working-done') return;
+    const answer=data.answer || frame.sheet.answer();
+    if (!answer) { frame.sheet.review(); return; }
+    if (frame === qp && !qp.closest('[hidden]')) {
+      if(E.checkDivision(quick.cur.n,quick.cur.d,answer.q+' r '+answer.r)!=='right') return;
+      if(!quick.cur.busy) {
+        $('qp-box').value=String(answer.q);
+        if($('qp-r')) $('qp-r').value=String(answer.r);
+        quickCheck(true);
+      }
+      if(quick.cur.busy && $('qp-form').classList.contains('done')) quickAsk();
+      return;
+    }
+    if(slot && !slot.ui.row.closest('[hidden]')) {
+      if(!slot.done) {
+        const raw=slot.gen.type==='remainder'?String(answer.r):slot.q.kind==='euro'?(answer.q/100).toFixed(2):String(answer.q);
+        if(E.check(slot.q,raw)!=='right') return;
+        clearTimeout(slot.markTimer); slot.busy=false;
+        slot.ui.box.value=raw;
+        onCheck(slot,slots.indexOf(slot));
+      } else {
+        const rest=slots.find((s,k)=>k>slots.indexOf(slot)&&!s.done)||slots.find(s=>!s.done);
+        rest?.ui.box.focus();
+      }
+    }
+  };
   const showQ = (slot) => {
     const { q, ui } = slot;
     ui.text.replaceChildren(...q.parts.map((p) => (typeof p === "string" ? document.createTextNode(p) : fractionNode(p))));
@@ -229,7 +327,10 @@
     if (!ui.box.value.trim()) { ui.box.focus(); return; }
     const result = E.check(slot.q, ui.box.value);
     const given = ui.box.value.trim();
-    if (result === "wrong") slot.tries = (slot.tries || 0) + 1;
+    if (result === "wrong") {
+      slot.tries = (slot.tries || 0) + 1;
+      if (divisionFor(slot)) { showWorksheet(slot); askWorksheet(slot.worksheet); }
+    }
     /* With a tries limit, the last wrong try closes the question as wrong. */
     const closed = result === "wrong" && settings().maxTries > 0 && slot.tries >= settings().maxTries;
     if (result !== "unclear") globalThis.Records.attempt(current.run, index, slot.gen.type, given, result === "right", closed);
@@ -262,7 +363,7 @@
     ui.row.classList.add(wrong ? "wrong" : "unsure");
     ui.mark.textContent = wrong ? "✗" : "?";
     if (wrong) slot.firstTry = false;
-    setTimeout(() => {
+    slot.markTimer = setTimeout(() => {
       slot.busy = false;
       ui.row.classList.remove("wrong", "unsure");
       ui.mark.textContent = "";
@@ -296,10 +397,15 @@
     const see = make("button", "see", "👀");
     see.type = "button";
     see.setAttribute("aria-label", "See how");
-    see.addEventListener("click", () => openWork(slot));
+    see.addEventListener("click", () => {
+      if (divisionFor(slot)) { showWorksheet(slot); askWorksheet(slot.worksheet); }
+      else openWork(slot);
+    });
     form.append(before, box, after, check, mark, see);
     form.addEventListener("submit", (e) => { e.preventDefault(); onCheck(slot, index); });
     body.append(text, table, form);
+    body.addEventListener('focusin', () => showWorksheet(slot));
+    text.addEventListener('click', () => showWorksheet(slot));
     row.append(make("span", "num", String(index + 1)), body);
     slot.ui = { row, text, table, before, after, box, check, mark, see };
     showQ(slot);
@@ -309,7 +415,14 @@
     $("home-link").textContent = test.title;
     slots = test.generators.map((gen) => ({ gen, q: E.nextQuestion(gen), done: false, busy: false, firstTry: true, hinted: false }));
     current = { test, run: globalThis.Records.start(test, slots.map((s) => ({ type: s.gen.type, q: s.q }))) };
+    $('test-sheets').querySelectorAll('.division-working').forEach(host=>host.sheet?.destroy());
+    $('test-sheets').replaceChildren();
+    $('test-working').hidden = true;
     $("plist").replaceChildren(...slots.map(buildRow));
+    if (test.topic === 'division') {
+      const first = slots.find(s => divisionFor(s));
+      if (first) showWorksheet(first);
+    }
     $("score").hidden = true;
   };
   $("again").addEventListener("click", () => { startTest(current.test); window.scrollTo(0, 0); });
@@ -324,10 +437,29 @@
   };
   const rulesOf = (type) => ({ ...globalThis.Scheduler.DEFAULTS, ...((settings().practice || {})[type.id] || {}) });
   const renderCount = () => {
-    $("qp-count").innerHTML = quick.right + quick.wrong ? `<b class="okc">✓ ${quick.right}</b> &nbsp; <b class="noc">✗ ${quick.wrong}</b>` : "";
+    $("qp-count").innerHTML = quick.right + quick.wrong ? `
+      <button type="button" class="count-tip okc" aria-label="${quick.right} correct answers" aria-describedby="qp-right-tip">✓ ${quick.right}<span class="count-tooltip" id="qp-right-tip" role="tooltip">Number of correct answers in this Quick practice session.</span></button>
+      <button type="button" class="count-tip noc" aria-label="${quick.wrong} wrong attempts" aria-describedby="qp-wrong-tip">✗ ${quick.wrong}<span class="count-tooltip" id="qp-wrong-tip" role="tooltip">Number of wrong answer attempts in this Quick practice session.</span></button>` : "";
+    $("qp-count").querySelectorAll('.count-tip').forEach(button => {
+      button.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); button.classList.add('tooltip-dismissed'); } });
+      button.addEventListener('mouseleave', () => button.classList.remove('tooltip-dismissed'));
+      button.addEventListener('focus', () => button.classList.remove('tooltip-dismissed'));
+    });
   };
   let quick = null; /* { type, state, cur: { key, n, d, repeat }, right, wrong } */
   const localKey = (type) => "bt-qp-" + type.id;
+  const shownKey = type => localKey(type) + '-shown:' + encodeURIComponent(globalThis.Account.state.user?.email || 'guest');
+  const restoreShown = type => {
+    try { return JSON.parse(localStorage.getItem(shownKey(type))); } catch { return null; }
+  };
+  const saveShown = () => {
+    const state=quick.state;
+    const history={shownCount:state.shownCount,lastShown:state.lastShown,recentShown:state.recentShown,wrongShownAt:state.wrongShownAt};
+    try {
+      localStorage.setItem(shownKey(quick.type),JSON.stringify(history));
+      if(!globalThis.Account.state.user) localStorage.setItem(localKey(quick.type),JSON.stringify(state));
+    } catch { /* private window */ }
+  };
   const loadState = async (type) => {
     if (globalThis.Account.state.user) {
       try { const r = await globalThis.Account.api("practice/" + type.id); if (r.state) return r.state; } catch { /* use a new state */ }
@@ -339,52 +471,66 @@
     const topic = E.TOPICS.find((t) => t.id === qp.topic);
     $("home-link").textContent = (topic ? topic.title : type.title) + " ⚡";
     const box = $("quick");
+    $('qp-working')?.sheet?.destroy();
     box.replaceChildren(make("p", "", "…"));
     const state = await loadState(type);
+    const shownHistory=restoreShown(type);
+    if(shownHistory && (shownHistory.shownCount || 0)>=(state.shownCount || 0)) {
+      ['shownCount','lastShown','recentShown','wrongShownAt'].forEach(key=>{if(shownHistory[key]!==undefined) state[key]=shownHistory[key];});
+    }
     quick = { qp, type, state, right: 0, wrong: 0 };
     const view = make("div", "qpview");
     view.innerHTML = `
-      <div class="qpcount" id="qp-count"></div>
-      <form class="qpform" id="qp-form" novalidate>
-        <span class="qpsum" id="qp-sum"></span> =
-        <input class="box qpbox" id="qp-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Answer">
-        ${type.remainder ? '<span class="qpr">r</span><input class="box qpbox qprbox" id="qp-r" type="text" inputmode="numeric" autocomplete="off" aria-label="Remainder">' : ""}
-        <button class="check" type="submit">Check</button>
-        <span class="mark" id="qp-mark" aria-live="polite"></span>
-      </form>
-      <div class="qpafter" id="qp-after" hidden>
-        <button class="see" id="qp-see" type="button" aria-label="See how">👀</button>
-        <button class="next" id="qp-next" type="button" aria-label="Next">${NEXT_ARROW}</button>
-      </div>`;
+      <div class="qpquestion">
+        <div class="qpcount" id="qp-count"></div>
+        <form class="qpform" id="qp-form" novalidate>
+          <span class="qpsum" id="qp-sum"></span> =
+          <input class="box qpbox" id="qp-box" type="text" inputmode="numeric" autocomplete="off" aria-label="Answer">
+          ${type.remainder ? '<span class="qpremainder"><span class="qpr">r</span><input class="box qpbox qprbox" id="qp-r" type="text" inputmode="numeric" autocomplete="off" aria-label="Remainder"></span>' : ""}
+          <button class="check" type="submit">Check</button>
+          <span class="mark" id="qp-mark" aria-live="polite"></span>
+        </form>
+        <div class="qpafter" id="qp-after">
+          <button class="next-question" id="qp-next" type="button" aria-label="Next question">Next question ${NEXT_ARROW}</button>
+        </div>
+      </div>
+      <aside class="division-panel" aria-label="Division working"><h2>Working</h2><div id="qp-sheet-host"></div></aside>`;
     box.replaceChildren(view);
     $("qp-form").addEventListener("submit", (e) => { e.preventDefault(); quickCheck(); });
-    $("qp-next").addEventListener("click", quickAsk);
-    $("qp-see").addEventListener("click", () => {
-      const { n, d } = quick.cur;
-      modal.hidden = false;
-      const f = make("iframe", "bagframe");
-      f.src = `longdiv.html?n=${n}&d=${d}`;
-      f.title = "Long division, step by step";
-      $("modal-vis").className = "";
-      $("modal-vis").replaceChildren(f);
+    $('qp-form').addEventListener('input', () => {
+      [$('qp-box'),$('qp-r')].forEach(input=>{if(input){input.classList.remove('answer-review-error','answer-review-dependent');input.removeAttribute('aria-invalid');}});
     });
+    $('qp-form').addEventListener('change', () => {
+      const frame=$('qp-working');
+      if(frame?.dataset.ready==='true'&&!quick.cur.busy) frame.sheet.review();
+    });
+    $("qp-next").addEventListener("click", quickAsk);
     quickAsk();
   };
   const quickAsk = () => {
+    clearTimeout(quick.cur?.advanceTimer);
     const rules = rulesOf(quick.type);
-    const { key, repeat } = globalThis.Scheduler.next(quick.state, groupsOf(quick.type, rules), rules);
+    const { key, repeat } = globalThis.Scheduler.next(quick.state, groupsOf(quick.type, rules), { ...rules, fresh: !quick.cur });
+    globalThis.Scheduler.shown(quick.state,key,rules);
+    saveShown();
     const [n, d] = key.split("/").map(Number);
     quick.cur = { key, n, d, repeat, busy: false };
     $("qp-sum").textContent = `${n} ÷ ${d}`;
+    const frame = makeWorksheet(n, d);
+    frame.id = 'qp-working';
+    $('qp-working')?.sheet?.destroy();
+    $('qp-sheet-host').replaceChildren(frame.loadingNote, frame);
+    frame.start();
     $("qp-mark").textContent = "";
-    $("qp-after").hidden = true;
+    delete $("qp-mark").dataset.working;
+    $("qp-after").hidden = false;
     $("qp-form").classList.remove("done", "wrong");
     const b = $("qp-box");
     [b, $("qp-r")].forEach((x) => { if (x) { x.value = ""; x.readOnly = false; } });
     b.focus();
     renderCount();
   };
-  const quickCheck = () => {
+  const quickCheck = (keepWorking = false) => {
     const c = quick.cur, b = $("qp-box"), rb = $("qp-r");
     if (c.busy || b.readOnly) return;
     /* 2 boxes: quotient and remainder; an empty remainder box counts as 0. */
@@ -392,9 +538,10 @@
     const result = b.value.trim() ? E.checkDivision(c.n, c.d, given) : "unclear";
     if (result === "unclear") { b.focus(); return; }
     const ok = result === "right";
+    c.attempted = true;
     c.busy = true;
-    b.readOnly = true;
-    if (rb) rb.readOnly = true;
+    b.readOnly = ok;
+    if (rb) rb.readOnly = ok;
     globalThis.Scheduler.answered(quick.state, c.key, ok, rulesOf(quick.type));
     if (globalThis.Account.state.user) globalThis.Records.practice(quick.type.id, c.key, given, ok, c.repeat, quick.state);
     else { try { localStorage.setItem(localKey(quick.type), JSON.stringify(quick.state)); } catch { /* private window */ } }
@@ -402,21 +549,28 @@
       quick.right++;
       renderCount();
       $("qp-mark").textContent = "✓";
+      $("qp-form").classList.remove("wrong");
+      [b, rb].forEach(input => { if (input) { input.classList.remove('answer-review-error','answer-review-dependent'); input.removeAttribute('aria-invalid'); } });
+      delete $("qp-mark").dataset.working;
       $("qp-form").classList.add("done");
-      setTimeout(quickAsk, 800);
+      if (keepWorking) $("qp-after").hidden = false;
+      else c.advanceTimer = setTimeout(() => { if (quick?.cur === c) quickAsk(); }, 800);
     } else {
       quick.wrong++;
       renderCount();
       $("qp-mark").textContent = "✗";
       $("qp-form").classList.add("wrong");
       $("qp-after").hidden = false;
+      c.busy = false;
+      askWorksheet($('qp-working'));
     }
   };
 
   /* For browser checks: the current questions. */
-  globalThis.App = { slots: () => slots, go, quick: () => quick };
-
-  /* Open a page from the address: index.html#learn, #test-26. */
-  const start = location.hash.slice(1);
-  if (start && (SECTIONS.includes(start) || start.startsWith("learn:") || start.startsWith("qp:") || E.TESTS.some((t) => t.id === start))) go(start);
+  const openStart = () => {
+    if(navigated) return;
+    const start=initialRoute;
+    if (start && (SECTIONS.includes(start) || start.startsWith("learn:") || start.startsWith("qp:") || E.TESTS.some((t) => t.id === start))) go(start);
+  };
+  globalThis.App = { slots: () => slots, go, quick: () => quick, openStart };
 })();

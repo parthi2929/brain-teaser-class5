@@ -1,8 +1,9 @@
 /* Quick practice: chooses the next sum of one type. No DOM code here, so the Node check runs it.
 
-   state (one per user and type, saved after each answer):
-     count   questions asked so far
-     recent  keys of the last questions asked, newest last (at most noRepeat)
+   state (one per user and type, saved when shown and answered):
+     count   graded attempts so far
+     recent  keys of the last graded questions, newest last (at most noRepeat)
+     recentShown / lastShown remember displayed questions, including skipped questions
      wrong   { key: { due, need, got } }  sums that must come back:
              due  = come back when count reaches this
              need = right answers needed before the sum stops coming back
@@ -18,12 +19,18 @@ globalThis.Scheduler = (() => {
   const next = (state, groups, rules, rng = Math.random) => {
     const r = { ...DEFAULTS, ...rules };
     /* 1. A sum she got wrong whose turn has come (the earliest first). */
-    const due = Object.entries(state.wrong).filter(([, w]) => w.due <= state.count).sort((a, b) => a[1].due - b[1].due);
+    const due = r.fresh ? [] : Object.entries(state.wrong).filter(([key, w]) =>
+      w.due <= state.count && key !== state.lastShown &&
+      (state.wrongShownAt?.[key] === undefined || (state.shownCount || 0) - state.wrongShownAt[key] >= r.gapMin) &&
+      groups.some(group => group.includes(key))
+    ).sort((a, b) => a[1].due - b[1].due);
     if (due.length) return { key: due[0][0], repeat: true };
     /* 2. A random sum that was not among the last noRepeat questions. With a small pool, the window shrinks. */
     const size = groups.reduce((s, g) => s + g.length, 0);
     const window = Math.min(r.noRepeat, size - 1);
     const blocked = new Set(state.recent.slice(Math.max(0, state.recent.length - window)));
+    (state.recentShown || []).slice(-Math.max(1, window)).forEach(k=>blocked.add(k));
+    if (state.lastShown) blocked.add(state.lastShown);
     Object.keys(state.wrong).forEach((k) => blocked.add(k)); /* it comes back on its own turn */
     for (let i = 0; i < 60; i++) {
       const g = groups[rnd(rng, 0, groups.length - 1)];
@@ -32,8 +39,23 @@ globalThis.Scheduler = (() => {
     }
     const all = groups.flat();
     const open = all.filter((k) => !blocked.has(k));
-    const from = open.length ? open : all;
+    const different = all.filter(k => k !== state.lastShown);
+    const from = open.length ? open : different.length ? different : all;
     return { key: from[rnd(rng, 0, from.length - 1)], repeat: false };
+  };
+
+  /* Remember display/skip/refresh without grading an answer. */
+  const shown = (state, key, rules) => {
+    const r = { ...DEFAULTS, ...rules };
+    state.shownCount = (state.shownCount || 0) + 1;
+    state.lastShown = key;
+    state.recentShown ||= [];
+    state.recentShown.push(key);
+    state.recentShown = state.recentShown.slice(-Math.max(1,r.noRepeat));
+    state.wrongShownAt ||= {};
+    Object.keys(state.wrongShownAt).forEach(k=>{if(!state.wrong[k]) delete state.wrongShownAt[k];});
+    if(state.wrong[key]) state.wrongShownAt[key]=state.shownCount;
+    return state;
   };
 
   /* Updates the state after an answer to `key`. */
@@ -53,5 +75,5 @@ globalThis.Scheduler = (() => {
     return state;
   };
 
-  return { DEFAULTS, fresh, next, answered };
+  return { DEFAULTS, fresh, next, shown, answered };
 })();

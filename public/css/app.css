@@ -305,3 +305,40 @@
   .qpbox.qprbox { width: 3.2em; }
   .qpform.done .qprbox { background: var(--leaf-soft); border-color: var(--leaf); }
   .qpform.wrong .qprbox { background: var(--wrong-soft); border-color: var(--wrong); }
+
+  /* Working stays beside the question from the first attempt. */
+  .page:has(#quick:not([hidden])), .page:has(#practice:not([hidden]) #test-working:not([hidden])) { max-width: 76rem; }
+  .qpview { grid-template-columns: minmax(0, 1fr) minmax(340px, 1.05fr); align-items: start; justify-items: stretch; gap: 1.4em; }
+  .qpquestion { position: sticky; top: 1em; }
+  .qpform { font-size: 1.25em; }
+  .qpremainder { display: inline-flex; align-items: center; gap: .4em; }
+  .qpafter { justify-content: center; margin-top: 1em; }
+  .qpcount { text-align: center; }
+  .division-panel { min-width: 0; }
+  .division-panel h2 { margin: 0 0 .4em; font-size: 1em; }
+  .division-working { display: block; box-sizing: border-box; min-width: 0; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); }
+  .test-layout:has(#test-working:not([hidden])) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr); align-items: start; gap: 1.4em; }
+  .test-questions { min-width: 0; }
+  #test-working { position: sticky; top: 1em; }
+  @media (max-width: 859px) {
+    .qpview, .test-layout:has(#test-working:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
+    .qpquestion, #test-working { position: static; }
+    #test-working { grid-row: 1; }
+  }
+
+  .qpcount { position: relative; }
+  .count-tip { border: 0; background: transparent; padding: .1em .35em; font-weight: 700; border-radius: 4px; }
+  .count-tip:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  .count-tooltip { position: absolute; z-index: 3; top: calc(100% + .4em); left: 50%; transform: translateX(-50%);
+    width: min(18rem, 100%); padding: .55em .75em; border: 1px solid var(--edge); border-radius: 8px;
+    background: var(--field); color: var(--ink); font-size: .75em; font-weight: 400; line-height: 1.4;
+    visibility: hidden; opacity: 0; pointer-events: none; }
+  .count-tip:not(.tooltip-dismissed):hover .count-tooltip, .count-tip:not(.tooltip-dismissed):focus .count-tooltip { visibility: visible; opacity: 1; }
+
+  .worksheet-loading { display: flex; align-items: center; flex-wrap: wrap; gap: .6em; margin: 0 0 .5em; font-size: .8em; }
+
+  .qpbox.answer-review-error { border-color: var(--wrong); background: var(--wrong-soft); }
+  .qpbox.answer-review-dependent { border-color: var(--edge); background: var(--flash); }
+
+  .next-question { display: inline-flex; align-items: center; justify-content: center; gap: .5em; padding: .4em .8em; border: 0; border-radius: 12px; background: var(--leaf); color: var(--on-leaf); font-size: .85em; font-weight: 700; }
+  .next-question svg { flex: none; }

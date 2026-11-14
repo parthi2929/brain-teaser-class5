@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Brain Teaser Class 5</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Caveat:wght@600;700&display=swap">
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Caveat:wght@600;700&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/app.css?v=8b2914019b2b">
 </head>
 <body>
 <div class="page">
@@ -28,11 +28,15 @@
   <section id="quick" hidden></section>
 
   <section id="practice" hidden>
+    <div class="test-layout"><div class="test-questions">
     <ol class="test" id="plist"></ol>
     <div class="score" id="score" hidden>
       <span class="score-value" id="score-value" role="status"></span>
       <button class="again" id="again" type="button">New test</button>
     </div>
+    </div><aside class="division-panel" id="test-working" aria-label="Division working" hidden>
+      <h2 id="test-working-title">Working</h2><p id="test-working-question" class="note-small"></p><div id="test-sheets"></div>
+    </aside></div>
   </section>
 
 </div>
@@ -55,11 +59,15 @@
 <script src="tests/test-17.js"></script>
 <script src="tests/test-18.js"></script>
 <script src="practice/division.js"></script>
-<script src="js/scheduler.js"></script>
+<script src="js/scheduler.js?v=9c89d2ca147b"></script>
 <script src="js/account.js"></script>
 <script src="js/records.js"></script>
 <script src="js/player.js"></script>
-<script src="js/app.js"></script>
-<script>globalThis.Account.load();</script>
+<script src="js/longdiv.js?v=1888459b4faa"></script>
+<script src="js/division-coach.js?v=72ebfd546830"></script>
+<script src="js/division-review.js?v=2af31463cc69"></script>
+<script src="js/division-sheet.js?v=191e99c0c5ad"></script>
+<script src="js/app.js?v=49db67a16f14"></script>
+<script>globalThis.Account.load().finally(() => globalThis.App.openStart());</script>
 </body>
 </html>

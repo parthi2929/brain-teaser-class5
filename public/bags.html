@@ -45,13 +45,12 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 500 17px/1.3 v
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--zone-line); outline-offset: 2px; }
-/* Try mode: copybook, keys and working on the left; the picture on the right; the working replaces the notes. */
+/* Try mode: copybook and working on the left; the picture on the right; the working replaces the notes. */
 .page.try { --cell: min(46px, 7vw, calc((100vh - 260px) / var(--rows))); }
 .page.try .stage { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 .page.try .sheet-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: start; gap: 8px 12px; padding-right: 0; }
 .page.try .sheet { grid-row: 1 / span 2; }
 .page.try #notes, .page.try #links { display: none; }
-.page.try #pad { width: auto; }
 .page.try #work { width: auto; grid-column: 2; }
 .page {
   --rows: 6;
@@ -73,7 +72,6 @@ button { cursor: pointer; }
 #eq i { font-style: normal; font-weight: 700; }
 #eq i.yes { color: var(--good); } #eq i.no { color: var(--bad); }
 #eq .ic { width: 1.1em; height: 1.1em; flex: none; }
-#typed { display: inline-block; min-width: 1.5em; text-align: center; border-bottom: 4px solid var(--ink); }
 #eq.right { animation: right .6s ease-out; }
 #eq.wrong { animation: wrong .4s ease-out; }
 @keyframes right { from { background: var(--good-soft); } }
@@ -82,14 +80,14 @@ button { cursor: pointer; }
 .stage { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: stretch; }
 .sheet-wrap { position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 10px; padding-right: 172px; min-height: 0; overflow-y: auto; }
 #eq .askq { flex-basis: 100%; justify-content: center; font-size: .8em; color: var(--te); }
-#pad { width: calc(var(--cell) * 5); justify-content: flex-start; }
-#pad .key { min-width: 56px; height: 60px; font-size: 28px; }
-#pad .key.big { min-width: 110px; }
 #work { margin: 0; padding: 4px 10px 4px 34px; width: calc(var(--cell) * 5 + 150px); max-width: 100%; border: 1px solid var(--grid); border-radius: 6px; background-color: var(--paper);
   background-image: linear-gradient(var(--grid) 1px, transparent 1px); background-size: 100% 30px; font: 700 18px/30px var(--font-hand); }
 #work:empty { display: none; }
 #work li.last { color: var(--te); }
-.mark.ghost { color: var(--bad); opacity: .85; }
+.mark.ghost { background: var(--zone-on); border: 2px solid var(--zone-line); border-radius: 0;
+  padding: 0; color: var(--ink); font-family: var(--font-hand); text-align: center; caret-color: var(--ink); }
+.mark.ghost:focus { outline: 3px solid var(--te); outline-offset: -3px; }
+.mark.ghost[aria-invalid="true"] { border-color: var(--bad); background: var(--bad-soft); }
 #notes { position: absolute; left: 0; top: 0; z-index: 4; }
 .note { position: absolute; height: var(--cell); display: flex; align-items: center; white-space: nowrap; font-size: clamp(15px, 1.5vw, 18px); font-weight: 700; line-height: 1; animation: noteIn .35s ease-out; }
 .note span { padding: 2px 6px; border-radius: 6px; background: var(--surface); }
@@ -118,10 +116,6 @@ button { cursor: pointer; }
 .go { min-width: 110px; height: 54px; border: 0; border-radius: 14px; background: var(--primary); color: var(--on-primary); font-size: 34px; font-weight: 700; line-height: 1; }
 .backbtn { width: 54px; height: 54px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 26px; color: var(--muted); line-height: 1; }
 .backbtn:disabled { visibility: hidden; }
-#pad { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
-.key { min-width: 48px; height: 52px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--paper); font-size: 25px; font-weight: 700; line-height: 1; padding: 0 10px; }
-.key.big { min-width: 96px; }
-.key.ok { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 
 #gear { position: absolute; top: 12px; right: max(16px, env(safe-area-inset-right, 0px)); width: 34px; height: 34px; border: 0; background: none; color: var(--muted); font-size: 21px; line-height: 1; z-index: 8; opacity: .7; }
 #panel { position: absolute; top: 48px; right: max(16px, env(safe-area-inset-right, 0px)); z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / .18); }
@@ -145,6 +139,10 @@ button { cursor: pointer; }
   .dock { position: sticky; bottom: 0; background: var(--bg); padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
   .dots { display: none; }
 }
+/* The current lesson uses the copybook only. */
+.canvas-wrap, #links, #notes { display: none; }
+.stage, .page.try .stage { grid-template-columns: minmax(0, 1fr); }
+.sheet-wrap { padding-right: 0; }
 @media (prefers-reduced-motion: reduce) { .mark.pop, #eq.right, #eq.wrong, .note { animation: none; } #links path.line { animation: none; stroke-dashoffset: 0; } .ringbox, .mark { transition: none; } }
 </style>
 
@@ -166,7 +164,6 @@ button { cursor: pointer; }
   <main class="stage" id="stage">
     <svg id="links" aria-hidden="true"></svg>
     <div class="sheet-wrap"><div class="sheet" id="sheet"></div><div id="notes"></div>
-      <div id="pad" hidden></div>
       <ol id="work" aria-label="Working"></ol>
     </div>
     <div class="canvas-wrap"><canvas id="cv" role="img"></canvas></div>
@@ -214,7 +211,7 @@ function buildLesson(N, D, thing) {
   const yes = '<i class="yes">✓</i>', no = '<i class="no">✗</i>';
   const row = html => '<span class="row">' + html + '</span>';
   const packs = (a, t, mark) => row(bagW(a) + ' × ' + D + ' = ' + num(a * D, t) + (mark || ''));
-  const slot = '<span id="typed"></span>';
+  const slot = '?';
   const itemIcon = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="9" fill="' + th.fill + '"/>' + (th.leaf ? '<ellipse cx="15.5" cy="4.5" rx="4" ry="2" fill="#2f8a3b" transform="rotate(-25 15.5 4.5)"/>' : '') + '</svg>';
   const bagIcon = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l1.5 13h-19z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M8 9a4 4 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>';
   const readEq = row(itemIcon + num(N, 'it')) + row(bagIcon + num(D, 'ink'));
@@ -243,17 +240,10 @@ function buildLesson(N, D, thing) {
   };
   const ringNum = (r, val) => ({ r, c0: len - String(val).length, c1: len - 1 });
 
-  const readNotes = { boxNote: th.many + ' to pack', bagNote: D + ' in each ' + th.bag, example: true };
-  snap({ eq: readEq, focus: 'box', ...readNotes });
-
+  // The question is given. Entry starts with the child's working.
   put(N, 0, 'it');
   String(D).split('').forEach((x, i, a) => marks.push({ div: 1 - (a.length - 1 - i), x, tone: 'ink' }));
-  snap({
-    eq: readEq, focus: 'box', ring: ringNum(0, N), ...readNotes,
-    notes: [{ r: 0, text: '← ' + itW(N), tone: 'it' }, { under: true, text: '↑ ' + D + ' in each ' + th.bag, tone: 'ink' }],
-    ask: { type: 'choice', options: [D, N], answer: N, eq: readEq, reveal: 3, q: 'Which number goes inside? Tap it.', cells: ringNum(0, N) },
-    work: N + ' ÷ ' + D
-  });
+  snap({ eq: row(N + ' ÷ ' + D), work: N + ' ÷ ' + D });
 
   let remaining = N, row0 = 0, started = false;
   const parts = [];
@@ -271,8 +261,7 @@ function buildLesson(N, D, thing) {
           eq: packs(p, tone, no), focus: 'box', tone, ring: ringNum(row0, have),
           notes: [{ q: p, text: '← ' + bagW(p) + '? too many', tone }],
           bagNote: bagW(p) + ' need ' + (p * D), boxNote: 'only ' + have,
-          ask: { type: 'choice', options: ['✓', '✗'], answer: '✗', eq: packs(p, tone), reveal: 2,
-            q: 'Enough for ' + bagW(p) + '? Tap ✓ or ✗.', place: p },
+          ask: { type: 'digit', answer: 0, eq: askEq, q: howMany, ghost: p, tone },
           work: D + ' × ' + p + ' = ' + (p * D) + ' ✗ too many → no ' + COLNAME[p] + 's'
         });
       } else {
@@ -382,8 +371,8 @@ function buildLesson(N, D, thing) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const pageEl = $('page');
 
-  let sumNo = 0, N = 96, D = 6, thing = 'apples', asks = 'bags', mode = PARAMS.get('mode') === 'try' ? 'try' : 'show';
-  let lesson = null, idx = 0, answered = new Set(), attempts = 0, typed = '', guesses = [];
+  let sumNo = 0, N = 96, D = 6, thing = 'apples', asks = 'bags', mode = PARAMS.get('mode') === 'show' ? 'show' : 'try';
+  let lesson = null, idx = 0, answered = new Set();
 
   // ---------- Table drawing ----------
   const cv = $('cv'), ctx = cv.getContext('2d');
@@ -753,7 +742,7 @@ function buildLesson(N, D, thing) {
       sheet.appendChild(h); frameEls.push(h);
     });
   }
-  /* ghosts: "?" marks in the cells she must fill now. */
+  /* Each pending copybook square is a real number-entry field. */
   function drawPaper(scene, ring, ghosts) {
     const list = scene.marks.concat(ghosts || []);
     const seen = new Set();
@@ -762,8 +751,41 @@ function buildLesson(N, D, thing) {
       seen.add(key);
       let el = markEls.get(key);
       if (!el) {
-        el = document.createElement('div');
-        el.textContent = m.x; at(el, c.row, c.col);
+        el = document.createElement(m.x === '?' ? 'input' : 'div');
+        if (m.x === '?') {
+          el.type = 'text';
+          el.inputMode = 'numeric';
+          el.autocomplete = 'off';
+          el.spellcheck = false;
+          el.maxLength = 1;
+          el.enterKeyHint = 'next';
+          el.setAttribute('aria-describedby', 'eq');
+          el.setAttribute('aria-label', 'Digit ' + ((ghosts || []).indexOf(m) + 1) + ' of ' + ghosts.length);
+          el.addEventListener('input', () => {
+            el.value = el.value.replace(/[^0-9]/g, '').slice(0, 1);
+            answerInputs().forEach(e => e.removeAttribute('aria-invalid'));
+            const fields = answerInputs(), k = fields.indexOf(el);
+            if (el.value && fields[k + 1]) { fields[k + 1].focus(); fields[k + 1].select(); }
+          });
+          el.addEventListener('paste', e => {
+            e.preventDefault();
+            const digits = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+            if (!digits) return;
+            const fields = answerInputs(), k = fields.indexOf(el);
+            [...digits].slice(0, fields.length - k).forEach((digit, j) => { fields[k + j].value = digit; });
+            fields.forEach(f => f.removeAttribute('aria-invalid'));
+            const last = fields[Math.min(k + digits.length, fields.length - 1)];
+            last.focus(); last.select();
+          });
+          el.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); e.stopPropagation(); advance(); }
+            else if (e.key === 'Backspace' && !el.value) {
+              const fields = answerInputs(), prev = fields[fields.indexOf(el) - 1];
+              if (prev) { e.preventDefault(); prev.focus(); prev.select(); }
+            }
+          });
+        } else el.textContent = m.x;
+        at(el, c.row, c.col);
         el.className = 'mark ' + m.tone + ' pop' + (m.x === '?' ? ' ghost' : '');
         sheet.appendChild(el); markEls.set(key, el);
       }
@@ -820,8 +842,7 @@ function buildLesson(N, D, thing) {
     e.classList.add(cls);
   }
   function drawEq(a) {
-    $('eq').innerHTML = a ? (a.q ? '<span class="row askq">' + a.q + '</span>' : '') + guesses.join('') + a.eq : lesson.steps[idx].eq;
-    renderTyped();
+    $('eq').innerHTML = a ? (a.q ? '<span class="row askq">' + a.q + '</span>' : '') + a.eq : lesson.steps[idx].eq;
   }
   /* The "?" cells for an ask: the answer digit in the quotient row, or the cells of the number she writes. */
   function ghostsFor(a) {
@@ -873,57 +894,30 @@ function buildLesson(N, D, thing) {
       dots.appendChild(d);
     });
     $('back').disabled = idx === 0 && sumNo === 0;
-    $('next').hidden = wait;
-    renderPad(wait ? a : null);
+    $('next').hidden = false;
+    if (wait) answerInputs()[0]?.focus({ preventScroll: true });
   }
-  function renderPad(a) {
-    const pad = $('pad');
-    pad.hidden = !a;
-    pad.innerHTML = '';
-    if (!a) return;
-    const key = (label, fn, cls) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'key' + (cls ? ' ' + cls : '');
-      b.textContent = label; b.addEventListener('click', fn);
-      pad.appendChild(b);
-    };
-    if (a.type === 'choice') {
-      a.options.forEach(o => key(String(o), () => submit(o), 'big'));
-    } else if (a.type === 'digit') {
-      for (let d = 0; d <= 9; d++) key(String(d), () => submit(d));
-    } else {
-      for (let d = 0; d <= 9; d++) key(String(d), () => typeDigit(d));
-      key('⌫', () => { typed = typed.slice(0, -1); renderTyped(); });
-      key('✓', () => { if (typed) submit(Number(typed)); }, 'ok');
+  function answerInputs() { return Array.from(sheet.querySelectorAll('input.ghost')); }
+  function advance() {
+    if (!pending()) { step(1); return; }
+    const fields = answerInputs();
+    const empty = fields.find(el => !el.value);
+    if (empty) { empty.focus(); return; }
+    const v = Number(fields.map(el => el.value).join(''));
+    if (v !== lesson.steps[idx].ask.answer) {
+      fields.forEach(el => el.setAttribute('aria-invalid', 'true'));
+      flash('wrong');
+      fields[0].focus(); fields[0].select();
+      return;
     }
-  }
-  function typeDigit(d) { if (typed.length < 4) { typed += d; renderTyped(); } }
-  function renderTyped() { const t = $('typed'); if (t) t.textContent = typed || '?'; }
-  function guessRow(a, v) {
-    const f = v * a.place, val = f * a.D;
-    const mark = val > a.have ? '<i class="no">✗</i>' : '<i class="yes">✓↑</i>';
-    return '<span class="row dim">' + f + ' ' + (f === 1 ? a.th.bag : a.th.bags) + ' × ' + a.D + ' = ' + val + mark + '</span>';
-  }
-  function solved() {
-    answered.add(idx); attempts = 0; typed = ''; guesses = [];
+    answered.add(idx);
     show();
+    step(1);
     flash('right');
-    $('next').focus();
-  }
-  function submit(v) {
-    const a = lesson.steps[idx].ask;
-    if (v === a.answer) { solved(); return; }
-    attempts++; typed = '';
-    if (PARAMS.get('nofinal') !== '1' && attempts >= (a.reveal || 4)) { solved(); return; }
-    if (a.type === 'digit') {
-      guesses.push(guessRow(a, v));
-      guesses = guesses.slice(-2);
-    }
-    drawEq(a);
-    flash('wrong');
+    if (!pending()) $('next').focus({ preventScroll: true });
   }
   function goto(n) {
-    idx = n; attempts = 0; typed = ''; guesses = [];
+    idx = n;
     show();
   }
   function step(dir) {
@@ -941,7 +935,7 @@ function buildLesson(N, D, thing) {
   function load(n, d, t) {
     N = n; D = d; thing = t;
     lesson = buildLesson(N, D, thing);
-    idx = 0; answered = new Set(); attempts = 0; typed = ''; guesses = [];
+    idx = 0; answered = new Set();
     sprites = new Map(); lastScene = null; curTable = null;
     if (ringEl) { ringEl.remove(); ringEl = null; }
     pageEl.dataset.thing = thing;
@@ -973,20 +967,12 @@ function buildLesson(N, D, thing) {
     asks = 'bags';
     load(n, d, 'apples');
   });
-  $('next').addEventListener('click', () => step(1));
+  $('next').addEventListener('click', advance);
   $('back').addEventListener('click', () => step(-1));
   document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (pending()) {
-      const a = lesson.steps[idx].ask;
-      if (a.type === 'digit' && /^[0-9]$/.test(e.key)) submit(Number(e.key));
-      else if (a.type === 'number') {
-        if (/^[0-9]$/.test(e.key)) typeDigit(Number(e.key));
-        else if (e.key === 'Backspace') { typed = typed.slice(0, -1); renderTyped(); }
-        else if (e.key === 'Enter' && typed) { e.preventDefault(); submit(Number(typed)); }
-      }
-    }
-    if (e.key === 'ArrowRight' && !pending()) step(1);
+    if (e.defaultPrevented || e.isComposing || e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Enter' && !e.target.closest('button')) { e.preventDefault(); advance(); }
+    else if (e.key === 'ArrowRight' && !pending()) step(1);
     else if (e.key === 'ArrowLeft') step(-1);
   });
 
