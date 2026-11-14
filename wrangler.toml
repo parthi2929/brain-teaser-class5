@@ -1,0 +1,16 @@
+# Cloudflare Pages project on the parent's personal account (parthi292929).
+# Deploy: npx wrangler pages deploy   (direct upload, uses no Pages build)
+name = "brain-teaser"
+compatibility_date = "2025-10-01"
+pages_build_output_dir = "public"
+
+[vars]
+# Public by design (it is in every Google sign-in page). Set after the parent creates the OAuth client.
+GOOGLE_CLIENT_ID = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "brain-teaser"
+# Replace with the id that `npx wrangler d1 create brain-teaser` prints.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

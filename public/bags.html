@@ -1,0 +1,990 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<title>Apple Bag Division</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Kalam:wght@700&display=swap">
+<style>
+/* Layout concept: one equation line, the copybook beside the packing table, one arrow. The picture carries the meaning. */
+:root {
+  --bg: #eef4f3; --surface: #f9fbfb; --ink: #17303a; --muted: #7c939b; --line: #c5d6d8;
+  --paper: #ffffff; --grid: #d3e6f3;
+  --zone: #e3f2e8; --zone-on: #fff4bf; --zone-line: #e0b93a;
+  --hu: #a3218f; --te: #09697a; --on: #ad5600; --hu-soft: #f6dcf1; --te-soft: #c9ebef; --on-soft: #fde3c4;
+  --item-text: #b81f1f; --it-plums: #6d3fa8; --it-eggs: #87601f; --it-oranges: #b35a00; --leaf: #2f8a3b;
+  --good: #17764a; --bad: #b8321f; --good-soft: #d8f1e3; --bad-soft: #fbe3df;
+  --ring: #ffe99a; --primary: #17303a; --on-primary: #ffffff;
+  --font-ui: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --font-hand: "Kalam", "Comic Sans MS", "Segoe Print", cursive;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f181b; --surface: #162227; --ink: #e8f1f2; --muted: #7f949c; --line: #2d4049;
+  --paper: #18292a; --grid: #27403f;
+  --zone: #17301f; --zone-on: #4a4215; --zone-line: #d9b63e;
+  --hu: #f08be0; --te: #62d7e6; --on: #ffb868; --hu-soft: #4d1f47; --te-soft: #124a55; --on-soft: #55361a;
+  --item-text: #ff8d82; --it-plums: #c3a2f2; --it-eggs: #e6c691; --it-oranges: #ffb868; --leaf: #58b866;
+  --good: #5bd798; --bad: #ff9486; --good-soft: #143b2a; --bad-soft: #43201b;
+  --ring: #4f4716; --primary: #e8f1f2; --on-primary: #0f181c;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0f181b; --surface: #162227; --ink: #e8f1f2; --muted: #7f949c; --line: #2d4049;
+  --paper: #18292a; --grid: #27403f;
+  --zone: #17301f; --zone-on: #4a4215; --zone-line: #d9b63e;
+  --hu: #f08be0; --te: #62d7e6; --on: #ffb868; --hu-soft: #4d1f47; --te-soft: #124a55; --on-soft: #55361a;
+  --item-text: #ff8d82; --it-plums: #c3a2f2; --it-eggs: #e6c691; --it-oranges: #ffb868; --leaf: #58b866;
+  --good: #5bd798; --bad: #ff9486; --good-soft: #143b2a; --bad-soft: #43201b;
+  --ring: #4f4716; --primary: #e8f1f2; --on-primary: #0f181c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 500 17px/1.3 var(--font-ui); }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--zone-line); outline-offset: 2px; }
+/* Try mode: copybook and working on the left; the picture on the right; the working replaces the notes. */
+.page.try { --cell: min(46px, 7vw, calc((100vh - 260px) / var(--rows))); }
+.page.try .stage { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.page.try .sheet-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: start; gap: 8px 12px; padding-right: 0; }
+.page.try .sheet { grid-row: 1 / span 2; }
+.page.try #notes, .page.try #links { display: none; }
+.page.try #work { width: auto; grid-column: 2; }
+.page {
+  --rows: 6;
+  --cell: min(54px, 6.5vw, calc((100vh - 226px) / var(--rows)));
+  position: relative; height: 100%; max-width: 1240px; margin: 0 auto; padding-block: 8px 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 8px;
+}
+.page[data-thing="plums"] { --item-text: var(--it-plums); }
+.page[data-thing="eggs"] { --item-text: var(--it-eggs); }
+.page[data-thing="oranges"] { --item-text: var(--it-oranges); }
+#question { flex: none; margin: 0; padding-inline: 40px; text-align: center; font-size: clamp(20px, 2.6vw, 28px); font-weight: 700; line-height: 1.25; text-wrap: balance; }
+#question b { display: inline-block; margin-left: .4em; padding: 0 .4em; border-radius: 8px; background: var(--good-soft); color: var(--good); }
+
+#eq { flex: none; min-height: 62px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 34px; padding-inline: 40px; font-size: clamp(22px, 3vw, 36px); font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; border-radius: 12px; }
+#eq .row { display: inline-flex; align-items: center; gap: .28em; white-space: nowrap; }
+#eq .dim { opacity: .55; font-size: .8em; }
+#eq b.hu { color: var(--hu); } #eq b.te { color: var(--te); } #eq b.on { color: var(--on); } #eq b.it { color: var(--item-text); }
+#eq i { font-style: normal; font-weight: 700; }
+#eq i.yes { color: var(--good); } #eq i.no { color: var(--bad); }
+#eq .ic { width: 1.1em; height: 1.1em; flex: none; }
+#eq.right { animation: right .6s ease-out; }
+#eq.wrong { animation: wrong .4s ease-out; }
+@keyframes right { from { background: var(--good-soft); } }
+@keyframes wrong { 0% { background: var(--bad-soft); transform: translateX(0); } 25% { transform: translateX(-9px); } 50% { transform: translateX(9px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+
+.stage { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.sheet-wrap { position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 10px; padding-right: 172px; min-height: 0; overflow-y: auto; }
+#eq .askq { flex-basis: 100%; justify-content: center; font-size: .8em; color: var(--te); }
+#work { margin: 0; padding: 4px 10px 4px 34px; width: calc(var(--cell) * 5 + 150px); max-width: 100%; border: 1px solid var(--grid); border-radius: 6px; background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px); background-size: 100% 30px; font: 700 18px/30px var(--font-hand); }
+#work:empty { display: none; }
+#work li.last { color: var(--te); }
+.mark.ghost { background: var(--zone-on); border: 2px solid var(--zone-line); border-radius: 0;
+  padding: 0; color: var(--ink); font-family: var(--font-hand); text-align: center; caret-color: var(--ink); }
+.mark.ghost:focus { outline: 3px solid var(--te); outline-offset: -3px; }
+.mark.ghost[aria-invalid="true"] { border-color: var(--bad); background: var(--bad-soft); }
+#notes { position: absolute; left: 0; top: 0; z-index: 4; }
+.note { position: absolute; height: var(--cell); display: flex; align-items: center; white-space: nowrap; font-size: clamp(15px, 1.5vw, 18px); font-weight: 700; line-height: 1; animation: noteIn .35s ease-out; }
+.note span { padding: 2px 6px; border-radius: 6px; background: var(--surface); }
+.note.hu { color: var(--hu); } .note.te { color: var(--te); } .note.on { color: var(--on); } .note.it { color: var(--item-text); } .note.ink { color: var(--ink); }
+@keyframes noteIn { from { opacity: 0; transform: translateX(8px); } }
+.colhead { position: absolute; width: var(--cell); padding: 1px 3px; font: 700 11px/1 var(--font-ui); color: var(--muted); z-index: 1; }
+#links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; overflow: visible; }
+#links path.line { fill: none; stroke-width: 2.5; stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawLine .6s .15s ease-out forwards; }
+@keyframes drawLine { to { stroke-dashoffset: 0; } }
+.sheet { position: relative; flex: none; width: calc(var(--cell) * 5); height: calc(var(--cell) * var(--rows)); background-color: var(--paper); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: var(--cell) var(--cell); border: 1px solid var(--grid); border-radius: 4px; overflow: hidden; font-family: var(--font-hand); }
+.mark { position: absolute; width: var(--cell); height: var(--cell); display: grid; place-items: center; font-size: calc(var(--cell) * .72); font-weight: 700; line-height: 1; transition: color .5s; z-index: 2; }
+.mark.hu { color: var(--hu); } .mark.te { color: var(--te); } .mark.on { color: var(--on); } .mark.it { color: var(--item-text); } .mark.ink { color: var(--ink); }
+.mark.pop { animation: write .45s ease-out; }
+@keyframes write { from { opacity: 0; transform: translateY(-8px) scale(1.35); } }
+.ringbox { position: absolute; background: var(--ring); border: 2px solid var(--zone-line); border-radius: 8px; z-index: 1; transition: left .35s, top .35s, width .35s; }
+.rule { position: absolute; height: 0; border-top: 2.5px solid var(--ink); z-index: 2; }
+.bracket { position: absolute; border-top: 2.5px solid var(--ink); border-left: 2.5px solid var(--ink); z-index: 2; }
+.canvas-wrap { position: relative; min-width: 0; min-height: 0; }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.dock { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; min-height: 58px; }
+.dots { display: flex; gap: 6px; margin-right: auto; }
+.dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.dots span.done { background: var(--muted); }
+.dots span.now { background: var(--primary); transform: scale(1.3); }
+.go { min-width: 110px; height: 54px; border: 0; border-radius: 14px; background: var(--primary); color: var(--on-primary); font-size: 34px; font-weight: 700; line-height: 1; }
+.backbtn { width: 54px; height: 54px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 26px; color: var(--muted); line-height: 1; }
+.backbtn:disabled { visibility: hidden; }
+
+#gear { position: absolute; top: 12px; right: max(16px, env(safe-area-inset-right, 0px)); width: 34px; height: 34px; border: 0; background: none; color: var(--muted); font-size: 21px; line-height: 1; z-index: 8; opacity: .7; }
+#panel { position: absolute; top: 48px; right: max(16px, env(safe-area-inset-right, 0px)); z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / .18); }
+.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg button { flex: 1; border: 0; background: none; padding: 2px 14px; font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+#customForm { display: flex; align-items: center; gap: 6px; }
+#customForm input { width: 64px; padding: 2px 6px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--paper); font-weight: 700; text-align: center; }
+#customForm input:invalid { border-color: var(--bad); }
+#customForm button { border: 0; border-radius: 8px; background: var(--primary); color: var(--on-primary); padding: 2px 12px; font-weight: 700; }
+@media (max-width: 659px) {
+  .page.try .stage, .page.try .sheet-wrap { grid-template-columns: minmax(0, 1fr); }
+  .page.try .sheet { grid-row: auto; }
+  .page.try #work { grid-column: auto; }
+  html, body { height: auto; }
+  .page { height: auto; min-height: 100%; --cell: min(40px, calc((100vw - 190px) / 5)); }
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .sheet-wrap { padding-right: 0; min-height: calc(var(--cell) * var(--rows)); }
+  #links { display: none; }
+  .canvas-wrap { height: 330px; }
+  .dock { position: sticky; bottom: 0; background: var(--bg); padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
+  .dots { display: none; }
+}
+/* The current lesson uses the copybook only. */
+.canvas-wrap, #links, #notes { display: none; }
+.stage, .page.try .stage { grid-template-columns: minmax(0, 1fr); }
+.sheet-wrap { padding-right: 0; }
+@media (prefers-reduced-motion: reduce) { .mark.pop, #eq.right, #eq.wrong, .note { animation: none; } #links path.line { animation: none; stroke-dashoffset: 0; } .ringbox, .mark { transition: none; } }
+</style>
+
+<div class="page" id="page">
+  <button type="button" id="gear" aria-label="Settings for parents" aria-expanded="false">⚙</button>
+  <div id="panel" hidden>
+    <div class="seg"><button type="button" id="modeShow" aria-pressed="true">Watch</button><button type="button" id="modeTry" aria-pressed="false">Try</button></div>
+    <form id="customForm">
+      <input id="customN" type="number" inputmode="numeric" min="10" max="999" required aria-label="Number to share, 10 to 999">
+      <span>÷</span>
+      <input id="customD" type="number" inputmode="numeric" min="2" max="99" required aria-label="Number in each bag, 2 to 99">
+      <button type="submit">Go</button>
+    </form>
+  </div>
+
+  <p id="question"></p>
+  <div id="eq" aria-live="polite"></div>
+
+  <main class="stage" id="stage">
+    <svg id="links" aria-hidden="true"></svg>
+    <div class="sheet-wrap"><div class="sheet" id="sheet"></div><div id="notes"></div>
+      <ol id="work" aria-label="Working"></ol>
+    </div>
+    <div class="canvas-wrap"><canvas id="cv" role="img"></canvas></div>
+  </main>
+
+  <div class="dock">
+    <div class="dots" id="dots"></div>
+    <button type="button" class="backbtn" id="back" aria-label="Back">←</button>
+    <button type="button" class="go" id="next" aria-label="Next">→</button>
+  </div>
+</div>
+
+<script>
+// Lesson logic. It builds every step as a full snapshot, so Back and Next need no undo code.
+// Written format: keep the zeros in each row of working, and subtract the whole number. There is no bring-down step.
+const THINGS = {
+  apples: { one: 'apple', many: 'apples', bag: 'bag', bags: 'bags', fill: '#d9342b', leaf: true },
+  plums: { one: 'plum', many: 'plums', bag: 'bag', bags: 'bags', fill: '#6d3fa8', leaf: true },
+  eggs: { one: 'egg', many: 'eggs', bag: 'box', bags: 'boxes', fill: '#e2bd8b', leaf: false },
+  oranges: { one: 'orange', many: 'oranges', bag: 'bag', bags: 'bags', fill: '#f0902a', leaf: true },
+  pears: { one: 'pear', many: 'pears', bag: 'bag', bags: 'bags', fill: '#b5c43a', leaf: true },
+  lemons: { one: 'lemon', many: 'lemons', bag: 'bag', bags: 'bags', fill: '#f2d22e', leaf: true },
+  peaches: { one: 'peach', many: 'peaches', bag: 'bag', bags: 'bags', fill: '#f6a37a', leaf: true },
+  biscuits: { one: 'biscuit', many: 'biscuits', bag: 'packet', bags: 'packets', fill: '#c98b4a', leaf: false },
+  buns: { one: 'bun', many: 'buns', bag: 'tray', bags: 'trays', fill: '#d9a066', leaf: false },
+  sweets: { one: 'sweet', many: 'sweets', bag: 'bag', bags: 'bags', fill: '#e0457b', leaf: false },
+  crayons: { one: 'crayon', many: 'crayons', bag: 'box', bags: 'boxes', fill: '#3b82f6', leaf: false },
+  stickers: { one: 'sticker', many: 'stickers', bag: 'packet', bags: 'packets', fill: '#f59e0b', leaf: false }
+};
+/* Embedded use from the practice app: bags.html?n=240&d=6&thing=eggs&asks=bags&bag=box&bags=boxes */
+const PARAMS = new URLSearchParams(location.search);
+if (PARAMS.get('thing') && THINGS[PARAMS.get('thing')] && PARAMS.get('bag')) {
+  THINGS[PARAMS.get('thing')].bag = PARAMS.get('bag');
+  THINGS[PARAMS.get('thing')].bags = PARAMS.get('bags') || PARAMS.get('bag') + 's';
+}
+function buildLesson(N, D, thing) {
+  const th = THINGS[thing];
+  const Q = Math.floor(N / D), R = N % D;
+  const len = String(N).length;
+  const TONE = { 100: 'hu', 10: 'te', 1: 'on' };
+  const COLNAME = { 100: 'hundred', 10: 'ten', 1: 'one' };
+  const itW = n => n + ' ' + (n === 1 ? th.one : th.many);
+  const bagW = n => n + ' ' + (n === 1 ? th.bag : th.bags);
+  const num = (v, t) => '<b class="' + t + '">' + v + '</b>';
+  const yes = '<i class="yes">✓</i>', no = '<i class="no">✗</i>';
+  const row = html => '<span class="row">' + html + '</span>';
+  const packs = (a, t, mark) => row(bagW(a) + ' × ' + D + ' = ' + num(a * D, t) + (mark || ''));
+  const slot = '?';
+  const itemIcon = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="9" fill="' + th.fill + '"/>' + (th.leaf ? '<ellipse cx="15.5" cy="4.5" rx="4" ry="2" fill="#2f8a3b" transform="rotate(-25 15.5 4.5)"/>' : '') + '</svg>';
+  const bagIcon = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l1.5 13h-19z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M8 9a4 4 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>';
+  const readEq = row(itemIcon + num(N, 'it')) + row(bagIcon + num(D, 'ink'));
+
+  const dealMeta = {};
+  const box = [];
+  for (let i = 0; i < N; i++) box.push('A' + i);
+  let bags = [];
+  let bagNo = 0;
+
+  // Copybook: r is the row (0 = the sum) and c is the column, with the last digit of N at c = len - 1.
+  const marks = [], rules = [];
+  const put = (val, r, tone) => {
+    const s = String(val);
+    for (let i = 0; i < s.length; i++) marks.push({ r, c: len - s.length + i, x: s[i], tone });
+  };
+  const steps = [];
+  const snap = o => {
+    steps.push({
+      eq: o.eq, focus: o.focus || null, ring: o.ring || null, ask: o.ask || null, tone: o.tone || 'ink', work: o.work || '',
+      notes: o.notes || [], mark: o.mark || null, group: o.group || null, link: o.link || null, fly: !!o.fly,
+      boxNote: o.boxNote || '', bagNote: o.bagNote || '', outlineBox: !!o.outlineBox, example: !!o.example,
+      marks: marks.map(m => ({ ...m })), rules: rules.map(x => ({ ...x })),
+      table: { box: box.slice(), bags: bags.map(b => ({ ...b })) }
+    });
+  };
+  const ringNum = (r, val) => ({ r, c0: len - String(val).length, c1: len - 1 });
+
+  // The question is given. Entry starts with the child's working.
+  put(N, 0, 'it');
+  String(D).split('').forEach((x, i, a) => marks.push({ div: 1 - (a.length - 1 - i), x, tone: 'ink' }));
+  snap({ eq: row(N + ' ÷ ' + D), work: N + ' ÷ ' + D });
+
+  let remaining = N, row0 = 0, started = false;
+  const parts = [];
+  const places = [100, 10, 1].filter(p => p <= N);
+  places.forEach(p => {
+    const have = remaining, tone = TONE[p];
+    const d = Math.floor(have / (p * D));
+    const prod = d * p * D;
+    const zeros = p === 100 ? '00' : p === 10 ? '0' : '';
+    const howMany = 'How many ' + COLNAME[p] + 's of ' + th.bags + '? ' + D + ' × ?' + zeros;
+    const askEq = row('?' + (p === 100 ? '00' : p === 10 ? '0' : '') + ' ' + th.bags + ' × ' + D);
+    if (d === 0) {
+      if (!started) {
+        snap({
+          eq: packs(p, tone, no), focus: 'box', tone, ring: ringNum(row0, have),
+          notes: [{ q: p, text: '← ' + bagW(p) + '? too many', tone }],
+          bagNote: bagW(p) + ' need ' + (p * D), boxNote: 'only ' + have,
+          ask: { type: 'digit', answer: 0, eq: askEq, q: howMany, ghost: p, tone },
+          work: D + ' × ' + p + ' = ' + (p * D) + ' ✗ too many → no ' + COLNAME[p] + 's'
+        });
+      } else {
+        marks.push({ q: p, x: '0', tone });
+        snap({
+          eq: packs(p, tone, no), focus: 'box', tone, ring: ringNum(row0, have),
+          notes: [{ q: p, text: '← 0 ' + COLNAME[p] + 's', tone }],
+          boxNote: have ? 'too few for ' + bagW(p) : '', outlineBox: have > 0,
+          ask: { type: 'digit', answer: 0, eq: askEq, place: p, have, tone, ghost: p, D, th, q: howMany },
+          work: D + ' × 1' + zeros + ' = ' + (p * D) + ' ✗ → write 0'
+        });
+      }
+      return;
+    }
+
+    started = true;
+    const n = d * p;
+    const more = bags.length > 0;
+    const group = { from: bags.length, n, tone };
+    parts.push(n);
+    const taking = { ids: box.slice(-prod), tone };
+    marks.push({ q: p, x: String(d), tone });
+    const newBags = [];
+    for (let i = 0; i < n; i++) newBags.push({ id: 'B' + bagNo++, tone, full: false, size: D });
+    bags = bags.concat(newBags);
+    const meaning = p === 1
+      ? (more ? d + ' more ' + (d === 1 ? th.bag : th.bags) : bagW(d))
+      : d + ' ' + COLNAME[p] + (d > 1 ? 's' : '') + ' = ' + bagW(n);
+    snap({
+      eq: packs(n, tone, yes) + '<span class="row dim">' + bagW((d + 1) * p) + ' × ' + D + ' = ' + ((d + 1) * p * D) + no + '</span>',
+      focus: 'bags', tone, ring: ringNum(row0, have), group, mark: taking, link: 'bags',
+      notes: [{ q: p, text: '← ' + meaning, tone }],
+      bagNote: bagW(n) + ' need ' + prod, boxNote: 'enough ✓',
+      ask: { type: 'digit', answer: d, eq: askEq, place: p, have, tone, ghost: p, D, th, q: howMany },
+      work: D + ' × ' + d + zeros + ' = ' + prod + ' ✓, ' + D + ' × ' + (d + 1) + zeros + ' = ' + ((d + 1) * p * D) + ' ✗ → write ' + d
+    });
+
+    newBags.forEach((b, bi) => {
+      const items = [];
+      for (let j = 0; j < D; j++) {
+        const id = box.pop();
+        items.push(id);
+        dealMeta[id] = { bag: bi, count: n, j };
+      }
+      const made = bags.find(x => x.id === b.id);
+      made.items = items; made.full = true;
+    });
+    put(prod, row0 + 1, tone);
+    snap({
+      eq: row(bagW(n) + ' × ' + itW(D) + ' = ' + num(itW(prod), tone)), focus: 'bags', tone, ring: ringNum(row0 + 1, prod),
+      group, mark: taking, link: 'bags', fly: true,
+      notes: [{ r: row0 + 1, text: '← ' + itW(prod) + ' packed', tone }],
+      bagNote: bagW(n) + ' × ' + D + ' = ' + prod, boxNote: prod + ' went into ' + th.bags,
+      ask: { type: 'number', answer: prod, eq: row(bagW(n) + ' × ' + D + ' = ' + slot), q: 'How many ' + th.many + ' go in? ' + n + ' × ' + D + ' = ?', cells: ringNum(row0 + 1, prod) },
+      work: n + ' × ' + D + ' = ' + prod
+    });
+
+    const left = have - prod;
+    const lastCol = places.indexOf(p) === places.length - 1;
+    rules.push({ r: row0 + 1 });
+    put(left, row0 + 2, 'it');
+    snap({
+      eq: row(num(have, 'it') + ' − ' + num(prod, tone) + ' = ' + num(left, 'it')), focus: 'box', tone: 'it', ring: ringNum(row0 + 2, left),
+      link: left ? 'box' : null, outlineBox: left > 0,
+      notes: [{ r: row0 + 2, text: '← ' + (left ? itW(left) + (lastCol ? ' left over' : ' in the box') : 'no ' + th.many + ' left'), tone: 'it' }],
+      boxNote: left === 0 ? '' : (left < D ? 'too few for 1 ' + th.bag : 'still in the box'),
+      ask: { type: 'number', answer: left, eq: row(num(have, 'it') + ' − ' + num(prod, tone) + ' = ' + slot), q: 'How many are left? ' + have + ' − ' + prod + ' = ?', cells: ringNum(row0 + 2, left) },
+      work: have + ' − ' + prod + ' = ' + left
+    });
+    remaining = left;
+    row0 += 2;
+  });
+
+  snap({
+    eq: row(N + ' ÷ ' + D + ' = <b>' + Q + '</b>' + (R ? ' r ' + num(R, 'it') : '')),
+    focus: 'bags', ring: { q: true }, group: { from: 0, n: Q, tone: 'ink' }, link: 'bags', outlineBox: R > 0,
+    notes: [{ q: 1, text: '← ' + (parts.length > 1 ? parts.join(' + ') + ' = ' : '') + bagW(Q), tone: 'ink' }].concat(R ? [{ r: row0, text: '← ' + itW(R) + ' left over', tone: 'it' }] : []),
+    boxNote: R ? 'left over' : ''
+  });
+
+  if (PARAMS.get('nofinal') === '1') steps.pop();
+  /* The last working line: the answer stays "?" (she types it in the app's answer boxes). */
+  const lastWork = N + ' ÷ ' + D + ' = ?' + (R ? ' r ?' : '');
+  return { N, D, Q, R, len, thing, th, steps, dealMeta, lastWork, rows: Math.max(6, row0 + 2) };
+}
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  // Sums from her book, easiest first, then the 3-digit by 2-digit example.
+  const ASKED = Number(PARAMS.get('n')) > 0 && Number(PARAMS.get('d')) > 0;
+  const SUMS = ASKED ? [{
+    N: Number(PARAMS.get('n')), D: Number(PARAMS.get('d')),
+    thing: THINGS[PARAMS.get('thing')] ? PARAMS.get('thing') : 'apples',
+    asks: PARAMS.get('asks') === 'left' ? 'left' : 'bags'
+  }] : [
+    { N: 96, D: 6, thing: 'apples', asks: 'bags' },
+    { N: 180, D: 20, thing: 'apples', asks: 'bags' },
+    { N: 150, D: 9, thing: 'oranges', asks: 'left' },
+    { N: 196, D: 10, thing: 'plums', asks: 'left' },
+    { N: 240, D: 6, thing: 'eggs', asks: 'bags' },
+    { N: 432, D: 15, thing: 'apples', asks: 'bags' }
+  ];
+  if (ASKED) document.getElementById('gear').hidden = true;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pageEl = $('page');
+
+  let sumNo = 0, N = 96, D = 6, thing = 'apples', asks = 'bags', mode = PARAMS.get('mode') === 'show' ? 'show' : 'try';
+  let lesson = null, idx = 0, answered = new Set();
+
+  // ---------- Table drawing ----------
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, dpr = 1, pal = {}, geo = null;
+  let sprites = new Map(), running = false, curTable = null, curFocus = null, lastScene = null, curStep = null;
+
+  const PAL_NAMES = ['ink', 'zone', 'zone-on', 'zone-line', 'hu', 'te', 'on', 'hu-soft', 'te-soft', 'on-soft', 'item-text', 'leaf'];
+  function readPalette() {
+    const s = getComputedStyle(pageEl);
+    PAL_NAMES.forEach(n => { pal[n] = s.getPropertyValue('--' + n).trim(); });
+  }
+  function rr(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function blockFit(count, w, h, cap) {
+    // Items sit in blocks of 100: 10 in a row, 10 rows in a block, with a small gap between blocks.
+    const blocks = Math.max(1, Math.ceil(count / 100));
+    const singleRows = Math.max(1, Math.ceil(Math.min(count, 100) / 10));
+    const gapU = 0.8;
+    let best = { s: 0, cols: 1 };
+    for (let cols = 1; cols <= blocks; cols++) {
+      const rowsOfBlocks = Math.ceil(blocks / cols);
+      const uW = cols * 10 + (cols - 1) * gapU;
+      const uH = blocks === 1 ? singleRows : rowsOfBlocks * 10 + (rowsOfBlocks - 1) * gapU;
+      const s = Math.min(w / uW, h / uH);
+      if (s > best.s) best = { s, cols };
+    }
+    const s = Math.min(best.s, cap);
+    const uW = best.cols * 10 + (best.cols - 1) * gapU;
+    return { s, cols: best.cols, gap: gapU * s, totalW: uW * s };
+  }
+  function blockPos(i, f, x0, y0) {
+    const b = Math.floor(i / 100), r = Math.floor((i % 100) / 10), c = i % 10;
+    const bc = b % f.cols, br = Math.floor(b / f.cols);
+    return { x: x0 + bc * (10 * f.s + f.gap) + (c + 0.5) * f.s, y: y0 + br * (10 * f.s + f.gap) + (r + 0.5) * f.s };
+  }
+  function buildGeo() {
+    const head = 50, gap = 8;
+    const topH = Math.round((H - gap) / 2);
+    const box = { x: 0, y: 0, w: W, h: topH };
+    const boxArea = { x: 10, y: head, w: W - 20, h: topH - head - 8 };
+    const fA = blockFit(N, boxArea.w, boxArea.h, 26);
+    const bagsZone = { x: 0, y: topH + gap, w: W, h: H - topH - gap };
+    const bagArea = { x: 10, y: bagsZone.y + head, w: W - 20, h: bagsZone.h - head - 8 };
+    const fB = blockFit(lesson.Q, bagArea.w, bagArea.h, 54);
+    geo = {
+      box, bagsZone, fA, fB,
+      ax: boxArea.x + (boxArea.w - fA.totalW) / 2, ay: boxArea.y,
+      bx: bagArea.x + (bagArea.w - fB.totalW) / 2, by: bagArea.y
+    };
+  }
+  function placeAll(tb) {
+    const out = new Map();
+    tb.box.forEach(id => {
+      const p = blockPos(Number(id.slice(1)), geo.fA, geo.ax, geo.ay);
+      out.set(id, { type: 'item', x: p.x, y: p.y, w: geo.fA.s * 0.86, a: 1, zone: 'box' });
+    });
+    tb.bags.forEach((b, i) => {
+      const p = blockPos(i, geo.fB, geo.bx, geo.by);
+      out.set(b.id, { type: 'bag', tone: b.tone, x: p.x, y: p.y, w: geo.fB.s * 0.88, a: 1, fill: b.full ? 1 : 0, zone: 'bag' });
+      if (b.full) b.items.forEach(id => {
+        out.set(id, { type: 'item', x: p.x, y: p.y, w: geo.fB.s * 0.3, a: 0, zone: 'bag' });
+      });
+    });
+    return out;
+  }
+  function setTween(sp, to, dur, delay, lift, now) {
+    sp.fx = sp.x; sp.fy = sp.y; sp.fw = sp.w; sp.fa = sp.a; sp.ff = sp.fill || 0;
+    sp.tx = to.x; sp.ty = to.y; sp.tw = to.w; sp.ta = to.a; sp.tf = to.fill === undefined ? sp.ff : to.fill;
+    sp.t0 = now + delay; sp.dur = dur; sp.lift = lift; sp.anim = true;
+  }
+  const bagDelay = m => m.bag * Math.min(70, 1300 / m.count);
+  function setScene(tb, instant) {
+    curTable = tb;
+    if (!geo) return;
+    const targets = placeAll(tb), now = performance.now();
+    const noAnim = instant || reduced;
+    const meta = lesson.dealMeta;
+    const fillDelay = new Map();
+    let round = 0;
+    tb.bags.forEach(b => {
+      const sp = sprites.get(b.id);
+      if (b.full && sp && (sp.fill || 0) < 0.5) fillDelay.set(b.id, round++);
+    });
+    targets.forEach((t, id) => {
+      let sp = sprites.get(id);
+      const to = { x: t.x, y: t.y, w: t.w, a: t.a, fill: t.fill };
+      if (!sp) {
+        sp = { id, type: t.type, tone: t.tone, x: t.x, y: t.y, w: t.w * 0.7, a: 0, fill: 0, zone: t.zone, anim: false };
+        sprites.set(id, sp);
+        if (noAnim) { Object.assign(sp, { w: t.w, a: t.a, fill: t.fill || 0 }); return; }
+        setTween(sp, to, 380, 0, 0, now);
+        return;
+      }
+      sp.dead = false;
+      const moved = sp.zone !== t.zone;
+      sp.zone = t.zone;
+      if (noAnim) { Object.assign(sp, { x: t.x, y: t.y, w: t.w, a: t.a, fill: t.fill || 0, anim: false }); return; }
+      if (t.type === 'bag') {
+        const delay = fillDelay.has(id) ? fillDelay.get(id) * Math.min(70, 1300 / fillDelay.size) + 320 : 0;
+        if (sp.x === t.x && sp.y === t.y && sp.w === t.w && sp.a === 1 && (sp.fill || 0) === (t.fill || 0)) return;
+        setTween(sp, to, 300, delay, 0, now);
+        return;
+      }
+      if (sp.x === t.x && sp.y === t.y && sp.w === t.w && sp.a === t.a) return;
+      let delay = 0, lift = 0;
+      if (moved && meta[id]) {
+        delay = bagDelay(meta[id]) + meta[id].j * Math.min(8, 120 / D);
+        lift = 22;
+      }
+      setTween(sp, to, 480, delay, lift, now);
+    });
+    sprites.forEach((sp, id) => {
+      if (targets.has(id) || sp.dead) return;
+      if (noAnim) { sprites.delete(id); return; }
+      sp.dead = true;
+      setTween(sp, { x: sp.x, y: sp.y, w: sp.w * 0.7, a: 0 }, 280, 0, 0, now);
+    });
+    curTable = tb;
+    kick();
+  }
+  function kick() { if (!running) { running = true; requestAnimationFrame(tick); } }
+  const ease = p => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  function tick(now) {
+    let busy = false;
+    sprites.forEach((sp, id) => {
+      if (!sp.anim) return;
+      const raw = (now - sp.t0) / sp.dur;
+      if (raw <= 0) { busy = true; return; }
+      const p = Math.min(raw, 1), e = ease(p);
+      sp.x = sp.fx + (sp.tx - sp.fx) * e;
+      sp.y = sp.fy + (sp.ty - sp.fy) * e;
+      sp.w = sp.fw + (sp.tw - sp.fw) * e;
+      // An item stays visible while it flies, and it fades only as it drops into the bag.
+      sp.a = sp.ta < sp.fa && sp.type === 'item' ? sp.fa + (sp.ta - sp.fa) * Math.max(0, (e - 0.75) / 0.25) : sp.fa + (sp.ta - sp.fa) * e;
+      sp.fill = sp.ff + (sp.tf - sp.ff) * e;
+      sp.off = sp.lift ? -Math.sin(Math.PI * p) * sp.lift : 0;
+      if (p >= 1) { sp.anim = false; sp.off = 0; if (sp.dead) sprites.delete(id); } else busy = true;
+    });
+    draw();
+    if (busy) requestAnimationFrame(tick); else running = false;
+  }
+  function drawItem(x, y, d) {
+    const th = lesson.th, r = d / 2;
+    ctx.fillStyle = th.fill;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    if (d >= 9) {
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      ctx.beginPath(); ctx.arc(x - r * .35, y - r * .35, r * .22, 0, 7); ctx.fill();
+      if (th.leaf) {
+        ctx.fillStyle = pal.leaf;
+        ctx.beginPath(); ctx.ellipse(x + r * .28, y - r * .92, r * .34, r * .16, -.5, 0, 7); ctx.fill();
+      }
+    }
+  }
+  const toneColor = t => t === 'it' ? pal['item-text'] : pal[t];
+  function bounds(points, s) {
+    const xs = points.map(q => q.x), ys = points.map(q => q.y), pad = s / 2 + 2;
+    const x = Math.min(...xs) - pad, y = Math.min(...ys) - pad;
+    return { x, y, w: Math.max(...xs) + pad - x, h: Math.max(...ys) + pad - y };
+  }
+  const applePos = id => blockPos(Number(id.slice(1)), geo.fA, geo.ax, geo.ay);
+  const boxRect = ids => ids.length ? bounds(ids.map(applePos), geo.fA.s) : null;
+  function groupRect(g) {
+    const pts = [];
+    for (let i = g.from; i < g.from + g.n; i++) pts.push(blockPos(i, geo.fB, geo.bx, geo.by));
+    return bounds(pts, geo.fB.s);
+  }
+  function drawNotesOnTable(st) {
+    // Marks drawn over the objects: rings on the apples in use, an outline on the group, and a short note beside each count.
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+    ctx.font = '700 ' + (W < 420 ? 14 : 17) + 'px "Baloo 2", system-ui, sans-serif';
+    if (st.boxNote) { ctx.fillStyle = toneColor(st.tone); ctx.fillText(st.boxNote, geo.box.x + 12, geo.box.y + 45); }
+    if (st.bagNote) { ctx.fillStyle = toneColor(st.tone); ctx.fillText(st.bagNote, geo.bagsZone.x + 12, geo.bagsZone.y + 45); }
+    if (st.mark) {
+      ctx.strokeStyle = toneColor(st.mark.tone); ctx.lineWidth = Math.max(1.2, geo.fA.s * .1);
+      st.mark.ids.forEach(id => { const q = applePos(id); ctx.beginPath(); ctx.arc(q.x, q.y, geo.fA.s * .47, 0, 7); ctx.stroke(); });
+    }
+    const outline = (r, tone) => { ctx.strokeStyle = toneColor(tone); ctx.lineWidth = 2.5; rr(r.x, r.y, r.w, r.h, 7); ctx.stroke(); };
+    if (st.group) outline(groupRect(st.group), st.group.tone);
+    if (st.outlineBox && curTable.box.length) outline(boxRect(curTable.box), 'it');
+    if (st.fly && st.mark && st.group) {
+      const from = boxRect(st.mark.ids), to = groupRect(st.group);
+      const x0 = from.x + from.w / 2, y0 = from.y + from.h, x1 = to.x + to.w / 2, y1 = to.y - 3;
+      ctx.strokeStyle = ctx.fillStyle = toneColor(st.tone); ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1 - 7); ctx.stroke();
+      const ang = Math.atan2(y1 - y0, x1 - x0);
+      ctx.beginPath(); ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - 11 * Math.cos(ang - .45), y1 - 11 * Math.sin(ang - .45));
+      ctx.lineTo(x1 - 11 * Math.cos(ang + .45), y1 - 11 * Math.sin(ang + .45));
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  function drawExampleBag() {
+    // On the first steps, one sample bag shows what "6 in each bag" means.
+    const z = geo.bagsZone, w = Math.min(92, z.h - 60), cx = z.x + z.w / 2, cy = z.y + 50 + (z.h - 50) / 2;
+    drawBag({ x: cx, w, fill: 1, tone: 'te' }, cy);
+  }
+  function drawLinks() {
+    // One arrow joins the current note in the copybook to the objects it counts.
+    const svg = $('links');
+    svg.innerHTML = '';
+    const st = curStep, src = $('notes').firstElementChild;
+    if (!st || !st.link || !geo || !src) return;
+    const r = st.link === 'bags' ? groupRect(st.group) : boxRect(st.table.box);
+    if (!r) return;
+    const sr = $('stage').getBoundingClientRect(), cr = cv.getBoundingClientRect(), nr = src.getBoundingClientRect();
+    const x0 = nr.right - sr.left + 3, y0 = nr.top + nr.height / 2 - sr.top;
+    const x1 = cr.left - sr.left + r.x - 7, y1 = cr.top - sr.top + r.y + r.h / 2;
+    const dx = Math.max(30, (x1 - x0) / 2);
+    const color = st.tone === 'it' ? 'var(--item-text)' : 'var(--' + (st.group && st.link === 'bags' ? st.group.tone : st.tone) + ')';
+    svg.innerHTML = '<path class="line" pathLength="1" stroke="' + color + '" d="M' + x0 + ' ' + y0 + ' C' + (x0 + dx) + ' ' + y0 + ' ' + (x1 - dx) + ' ' + y1 + ' ' + x1 + ' ' + y1 + '"/>' +
+      '<path fill="' + color + '" d="M' + (x1 + 7) + ' ' + y1 + ' L' + (x1 - 5) + ' ' + (y1 - 6) + ' L' + (x1 - 5) + ' ' + (y1 + 6) + ' Z"/>';
+  }
+  function drawEmptyBox() {
+    // An open box with nothing in it, so 0 looks like 0.
+    const z = geo.box, w = Math.min(120, z.w * .4), h = w * .55, cx = z.x + z.w / 2, top = z.y + 50 + (z.h - 50 - h - 26) / 2;
+    ctx.save();
+    ctx.globalAlpha = .6;
+    ctx.strokeStyle = pal.ink; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - w / 2 - w * .16, top - h * .22); ctx.lineTo(cx - w / 2, top); ctx.lineTo(cx - w / 2, top + h);
+    ctx.lineTo(cx + w / 2, top + h); ctx.lineTo(cx + w / 2, top); ctx.lineTo(cx + w / 2 + w * .16, top - h * .22);
+    ctx.moveTo(cx - w / 2, top); ctx.lineTo(cx + w / 2, top);
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = pal['item-text']; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.font = '700 18px "Baloo 2", system-ui, sans-serif';
+    ctx.fillText('No ' + lesson.th.many + ' left', cx, top + h + 24);
+  }
+  function drawBag(sp, y) {
+    // A carrier bag with a handle, or a box for eggs. A full one shows its contents at the top.
+    const th = lesson.th, isBox = th.bag === 'box';
+    const x = sp.x, w = sp.w, tone = pal[sp.tone], soft = pal[sp.tone + '-soft'], fill = sp.fill || 0;
+    const top = y - w / 2 + w * (isBox ? .16 : .3), bottom = y + w / 2;
+    const tw = w * .78, bw = w * (isBox ? .78 : .92);
+    const body = () => {
+      ctx.beginPath();
+      ctx.moveTo(x - tw / 2, top); ctx.lineTo(x + tw / 2, top);
+      ctx.lineTo(x + bw / 2, bottom); ctx.lineTo(x - bw / 2, bottom);
+      ctx.closePath();
+    };
+    const handle = () => {
+      if (isBox) return;
+      ctx.beginPath(); ctx.arc(x, top, w * .19, Math.PI, 0); ctx.stroke();
+    };
+    ctx.lineWidth = Math.max(1, w / 22);
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = tone;
+    if (fill < 1) {
+      ctx.setLineDash([Math.max(2, w / 9), Math.max(2, w / 10)]);
+      body(); ctx.stroke(); handle();
+      ctx.setLineDash([]);
+    }
+    if (fill > 0) {
+      ctx.save(); ctx.globalAlpha *= fill;
+      handle();
+      if (w >= 14) {
+        ctx.fillStyle = th.fill;
+        [-.21, 0, .21].forEach(o => { ctx.beginPath(); ctx.arc(x + o * w, top - w * .02, w * .095, 0, 7); ctx.fill(); });
+      }
+      ctx.fillStyle = soft;
+      body(); ctx.fill(); ctx.stroke();
+      if (w >= 18) {
+        ctx.fillStyle = pal.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '700 ' + Math.min(w * .4, 26) + 'px "Baloo 2", system-ui, sans-serif';
+        ctx.fillText(String(D), x, (top + bottom) / 2 + 1);
+      }
+      ctx.restore();
+    }
+  }
+  function draw() {
+    if (!geo || !curTable) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    const tb = curTable;
+    const zone = (g, on) => {
+      ctx.fillStyle = on ? pal['zone-on'] : pal.zone;
+      rr(g.x, g.y, g.w, g.h, 10); ctx.fill();
+      if (on) { ctx.strokeStyle = pal['zone-line']; ctx.lineWidth = 2; ctx.stroke(); }
+    };
+    zone(geo.box, curFocus === 'box');
+    zone(geo.bagsZone, curFocus === 'bags');
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.font = '700 ' + (W < 420 ? 17 : 20) + 'px "Baloo 2", system-ui, sans-serif';
+    // Each zone opens with its count in words. An icon beside 0 would read as 1 item.
+    const th = lesson.th, by = geo.bagsZone.y;
+    ctx.fillStyle = pal['item-text'];
+    ctx.fillText(th.many[0].toUpperCase() + th.many.slice(1) + ' in box: ' + tb.box.length, geo.box.x + 12, geo.box.y + 24);
+    const groups = [];
+    ['hu', 'te', 'on'].forEach(t => {
+      const c = tb.bags.filter(b => b.tone === t && b.full).length;
+      if (c) groups.push({ t, c });
+    });
+    let x = geo.bagsZone.x + 12;
+    const y = by + 24, total = groups.reduce((s, g) => s + g.c, 0);
+    ctx.fillStyle = pal.ink;
+    const lead = 'Total ' + th.bags + ': ';
+    ctx.fillText(lead, x, y); x += ctx.measureText(lead).width;
+    if (!groups.length) { ctx.fillStyle = pal.ink; ctx.fillText('0', x, y); x += ctx.measureText('0').width; }
+    groups.forEach((g, i) => {
+      ctx.fillStyle = pal[g.t];
+      const s = String(g.c);
+      ctx.fillText(s, x, y); x += ctx.measureText(s).width;
+      if (i < groups.length - 1) { ctx.fillStyle = pal.ink; ctx.fillText(' + ', x, y); x += ctx.measureText(' + ').width; }
+    });
+    if (groups.length > 1) { ctx.fillStyle = pal.ink; ctx.fillText(' = ' + total, x, y); x += ctx.measureText(' = ' + total).width; }
+    if (curStep && curStep.example) drawExampleBag();
+    const paint = sp => {
+      ctx.globalAlpha = Math.max(0, Math.min(1, sp.a));
+      if (ctx.globalAlpha <= 0) return;
+      const yy = sp.y + (sp.off || 0);
+      if (sp.type === 'bag') drawBag(sp, yy);
+      else drawItem(sp.x, yy, sp.w);
+    };
+    sprites.forEach(sp => { if (sp.type === 'bag') paint(sp); });
+    sprites.forEach(sp => { if (sp.type !== 'bag' && !sp.anim) paint(sp); });
+    ctx.globalAlpha = 1;
+    if (!tb.box.length && !(curStep && curStep.mark)) drawEmptyBox();
+    if (curStep) drawNotesOnTable(curStep);
+    sprites.forEach(sp => { if (sp.type !== 'bag' && sp.anim) paint(sp); });
+    ctx.globalAlpha = 1;
+  }
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    if (r.width < 10) return;
+    dpr = window.devicePixelRatio || 1;
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    if (!lesson) return;
+    buildGeo();
+    if (curTable) setScene(curTable, true);
+    draw();
+    drawLinks();
+  }
+
+  // ---------- Copybook drawing ----------
+  const sheet = $('sheet');
+  const markEls = new Map();
+  let ringEl = null, frameEls = [];
+  const FIRST = 2;
+  const at = (el, row, col) => { el.style.top = 'calc(var(--cell) * ' + row + ')'; el.style.left = 'calc(var(--cell) * ' + col + ')'; };
+  function cellOf(m) {
+    if (m.div !== undefined) return { row: 1, col: m.div };
+    if (m.q) return { row: 0, col: FIRST + lesson.len - 1 - Math.round(Math.log10(m.q)) };
+    return { row: m.r + 1, col: m.c + FIRST };
+  }
+  function drawSheetFrame() {
+    frameEls.forEach(e => e.remove()); frameEls = [];
+    markEls.forEach(e => e.remove()); markEls.clear();
+    pageEl.style.setProperty('--rows', lesson.rows);
+    const b = document.createElement('div');
+    b.className = 'bracket'; at(b, 1, FIRST);
+    b.style.width = 'calc(var(--cell) * ' + lesson.len + ')'; b.style.height = 'var(--cell)';
+    sheet.appendChild(b); frameEls.push(b);
+    // Column letters show that a top digit counts hundreds, tens or units of bags.
+    ['H', 'T', 'U'].slice(3 - lesson.len).forEach((letter, i) => {
+      const h = document.createElement('div');
+      h.className = 'colhead'; h.textContent = letter; at(h, 0, FIRST + i);
+      sheet.appendChild(h); frameEls.push(h);
+    });
+  }
+  /* Each pending copybook square is a real number-entry field. */
+  function drawPaper(scene, ring, ghosts) {
+    const list = scene.marks.concat(ghosts || []);
+    const seen = new Set();
+    list.forEach(m => {
+      const c = cellOf(m), key = c.row + '-' + c.col + '-' + m.x;
+      seen.add(key);
+      let el = markEls.get(key);
+      if (!el) {
+        el = document.createElement(m.x === '?' ? 'input' : 'div');
+        if (m.x === '?') {
+          el.type = 'text';
+          el.inputMode = 'numeric';
+          el.autocomplete = 'off';
+          el.spellcheck = false;
+          el.maxLength = 1;
+          el.enterKeyHint = 'next';
+          el.setAttribute('aria-describedby', 'eq');
+          el.setAttribute('aria-label', 'Digit ' + ((ghosts || []).indexOf(m) + 1) + ' of ' + ghosts.length);
+          el.addEventListener('input', () => {
+            el.value = el.value.replace(/[^0-9]/g, '').slice(0, 1);
+            answerInputs().forEach(e => e.removeAttribute('aria-invalid'));
+            const fields = answerInputs(), k = fields.indexOf(el);
+            if (el.value && fields[k + 1]) { fields[k + 1].focus(); fields[k + 1].select(); }
+          });
+          el.addEventListener('paste', e => {
+            e.preventDefault();
+            const digits = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+            if (!digits) return;
+            const fields = answerInputs(), k = fields.indexOf(el);
+            [...digits].slice(0, fields.length - k).forEach((digit, j) => { fields[k + j].value = digit; });
+            fields.forEach(f => f.removeAttribute('aria-invalid'));
+            const last = fields[Math.min(k + digits.length, fields.length - 1)];
+            last.focus(); last.select();
+          });
+          el.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); e.stopPropagation(); advance(); }
+            else if (e.key === 'Backspace' && !el.value) {
+              const fields = answerInputs(), prev = fields[fields.indexOf(el) - 1];
+              if (prev) { e.preventDefault(); prev.focus(); prev.select(); }
+            }
+          });
+        } else el.textContent = m.x;
+        at(el, c.row, c.col);
+        el.className = 'mark ' + m.tone + ' pop' + (m.x === '?' ? ' ghost' : '');
+        sheet.appendChild(el); markEls.set(key, el);
+      }
+    });
+    markEls.forEach((el, key) => { if (!seen.has(key)) { el.remove(); markEls.delete(key); } });
+    sheet.querySelectorAll('.rule').forEach(e => e.remove());
+    scene.rules.forEach(u => {
+      const e = document.createElement('div');
+      e.className = 'rule';
+      e.style.top = 'calc(var(--cell) * ' + (u.r + 2) + ')';
+      e.style.left = 'calc(var(--cell) * ' + FIRST + ')';
+      e.style.width = 'calc(var(--cell) * ' + lesson.len + ')';
+      sheet.appendChild(e);
+    });
+    if (ring) {
+      if (!ringEl) { ringEl = document.createElement('div'); ringEl.className = 'ringbox'; sheet.appendChild(ringEl); }
+      let row, c0, n;
+      if (ring.q) {
+        const cells = scene.marks.filter(m => m.q).map(cellOf);
+        row = 0; c0 = Math.min(...cells.map(x => x.col)); n = cells.length;
+      } else {
+        const a = cellOf({ r: ring.r, c: ring.c0 });
+        row = a.row; c0 = a.col; n = ring.c1 - ring.c0 + 1;
+      }
+      ringEl.style.top = 'calc(var(--cell) * ' + row + ' + 1px)';
+      ringEl.style.left = 'calc(var(--cell) * ' + c0 + ' + 1px)';
+      ringEl.style.width = 'calc(var(--cell) * ' + n + ' - 2px)';
+      ringEl.style.height = 'calc(var(--cell) - 2px)';
+    } else if (ringEl) { ringEl.remove(); ringEl = null; }
+  }
+
+  function drawNotes(list) {
+    const box = $('notes');
+    box.innerHTML = '';
+    list.forEach(n => {
+      const e = document.createElement('div');
+      e.className = 'note ' + n.tone;
+      const span = document.createElement('span');
+      span.textContent = n.text;
+      e.appendChild(span);
+      if (n.under) at(e, 2, 0);
+      else if (n.q) at(e, 0, cellOf({ q: n.q }).col + 1);
+      else at(e, n.r + 1, FIRST + lesson.len);
+      box.appendChild(e);
+    });
+  }
+
+  // ---------- Step rendering ----------
+  const pending = () => mode === 'try' && lesson.steps[idx].ask && !answered.has(idx);
+  function flash(cls) {
+    const e = $('eq');
+    e.classList.remove('right', 'wrong');
+    void e.offsetWidth;
+    e.classList.add(cls);
+  }
+  function drawEq(a) {
+    $('eq').innerHTML = a ? (a.q ? '<span class="row askq">' + a.q + '</span>' : '') + a.eq : lesson.steps[idx].eq;
+  }
+  /* The "?" cells for an ask: the answer digit in the quotient row, or the cells of the number she writes. */
+  function ghostsFor(a) {
+    if (!a) return [];
+    if (a.ghost || a.place) return [{ q: a.ghost || a.place, x: '?', tone: a.tone || 'ink' }];
+    if (a.cells) {
+      const out = [];
+      for (let c = a.cells.c0; c <= a.cells.c1; c++) out.push({ r: a.cells.r, c, x: '?', tone: 'ink' });
+      return out;
+    }
+    return [];
+  }
+  /* The working lines of the steps done so far; on the last step, the answer line with "?". */
+  function drawWork(doneTo) {
+    const lines = lesson.steps.slice(0, doneTo + 1).map(s => s.work).filter(Boolean);
+    if (PARAMS.get('nofinal') === '1' && doneTo >= lesson.steps.length - 1) lines.push(lesson.lastWork);
+    $('work').innerHTML = lines.map((t, i) => '<li' + (i === lines.length - 1 && t === lesson.lastWork ? ' class="last"' : '') + '>' + t + '</li>').join('');
+    $('work').scrollTop = $('work').scrollHeight;
+  }
+  function drawQuestion() {
+    // The question stays on screen for the whole sum. The last step adds the answer beside it.
+    const th = lesson.th, { Q, R } = lesson;
+    const text = N + ' ' + th.many + '. ' + D + ' in each ' + th.bag + '. ' + (asks === 'left' ? 'How many left over?' : 'How many ' + th.bags + '?');
+    const answer = asks === 'left' ? R + ' ' + (R === 1 ? th.one : th.many) : Q + ' ' + (Q === 1 ? th.bag : th.bags);
+    $('question').innerHTML = text + (idx === lesson.steps.length - 1 && PARAMS.get('nofinal') !== '1' ? '<b>' + answer + '</b>' : '');
+  }
+  function show() {
+    const st = lesson.steps[idx], wait = pending();
+    drawQuestion();
+    const scene = wait ? lesson.steps[idx - 1] : st;
+    const a = st.ask;
+    drawPaper(scene, st.ring, wait ? ghostsFor(a) : []);
+    drawEq(wait ? a : null);
+    drawWork(wait ? idx - 1 : idx);
+    pageEl.classList.toggle('try', mode === 'try');
+    drawNotes(wait ? [] : st.notes);
+    curFocus = st.focus;
+    curStep = wait ? null : st;
+    if (lastScene !== scene.table) { setScene(scene.table, false); lastScene = scene.table; }
+    else { draw(); }
+    drawLinks();
+    const full = scene.table.bags.filter(b => b.full).length;
+    cv.setAttribute('aria-label', scene.table.box.length + ' ' + lesson.th.many + ' in the box, ' + full + ' ' + lesson.th.bags + ' filled.');
+    const dots = $('dots');
+    dots.innerHTML = '';
+    lesson.steps.forEach((_, i) => {
+      const d = document.createElement('span');
+      if (i === idx) d.className = 'now'; else if (i < idx) d.className = 'done';
+      dots.appendChild(d);
+    });
+    $('back').disabled = idx === 0 && sumNo === 0;
+    $('next').hidden = false;
+    if (wait) answerInputs()[0]?.focus({ preventScroll: true });
+  }
+  function answerInputs() { return Array.from(sheet.querySelectorAll('input.ghost')); }
+  function advance() {
+    if (!pending()) { step(1); return; }
+    const fields = answerInputs();
+    const empty = fields.find(el => !el.value);
+    if (empty) { empty.focus(); return; }
+    const v = Number(fields.map(el => el.value).join(''));
+    if (v !== lesson.steps[idx].ask.answer) {
+      fields.forEach(el => el.setAttribute('aria-invalid', 'true'));
+      flash('wrong');
+      fields[0].focus(); fields[0].select();
+      return;
+    }
+    answered.add(idx);
+    show();
+    step(1);
+    flash('right');
+    if (!pending()) $('next').focus({ preventScroll: true });
+  }
+  function goto(n) {
+    idx = n;
+    show();
+  }
+  function step(dir) {
+    const n = idx + dir;
+    if (n >= lesson.steps.length) { if (ASKED) return; sumNo = (sumNo + 1) % SUMS.length; loadSum(); return; }
+    if (n < 0) {
+      if (sumNo === 0) return;
+      sumNo--; loadSum(); return;
+    }
+    goto(n);
+  }
+
+  // ---------- Controls ----------
+  function loadSum() { const s = SUMS[sumNo]; asks = s.asks; load(s.N, s.D, s.thing); }
+  function load(n, d, t) {
+    N = n; D = d; thing = t;
+    lesson = buildLesson(N, D, thing);
+    idx = 0; answered = new Set();
+    sprites = new Map(); lastScene = null; curTable = null;
+    if (ringEl) { ringEl.remove(); ringEl = null; }
+    pageEl.dataset.thing = thing;
+    readPalette();
+    drawSheetFrame();
+    if (W) buildGeo();
+    $('customN').value = N; $('customD').value = D;
+    show();
+  }
+  function setMode(m) {
+    mode = m;
+    $('modeShow').setAttribute('aria-pressed', String(m === 'show'));
+    $('modeTry').setAttribute('aria-pressed', String(m === 'try'));
+    load(N, D, thing);
+  }
+  $('modeShow').addEventListener('click', () => setMode('show'));
+  $('modeTry').addEventListener('click', () => setMode('try'));
+  $('gear').addEventListener('click', () => {
+    const p = $('panel');
+    p.hidden = !p.hidden;
+    $('gear').setAttribute('aria-expanded', String(!p.hidden));
+  });
+  $('customForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const n = Number($('customN').value), d = Number($('customD').value);
+    if (n < d) { $('customN').setCustomValidity('x'); $('customN').reportValidity(); $('customN').setCustomValidity(''); return; }
+    $('panel').hidden = true;
+    $('gear').setAttribute('aria-expanded', 'false');
+    asks = 'bags';
+    load(n, d, 'apples');
+  });
+  $('next').addEventListener('click', advance);
+  $('back').addEventListener('click', () => step(-1));
+  document.addEventListener('keydown', e => {
+    if (e.defaultPrevented || e.isComposing || e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Enter' && !e.target.closest('button')) { e.preventDefault(); advance(); }
+    else if (e.key === 'ArrowRight' && !pending()) step(1);
+    else if (e.key === 'ArrowLeft') step(-1);
+  });
+
+  // ---------- Theme, size and start ----------
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readPalette(); draw(); });
+  new MutationObserver(() => { readPalette(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  readPalette();
+  resize();
+  loadSum();
+  new ResizeObserver(resize).observe(cv);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+})();
+</script>
+
+</body></html>
