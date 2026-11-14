@@ -16,6 +16,7 @@ globalThis.DivisionSheet = (() => {
   .instruction { margin:0; color:var(--muted); font-size:.85em; text-align:center; }
   #coaching { width:100%; padding:12px; background:var(--soft); border-radius:8px; display:grid; justify-items:center; gap:10px; }
   #coaching p { margin:0; }
+  #coach-question { font-weight:700; text-align:center; }
   #comparison { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; font-size:1.4em; font-weight:700; }
   #comparison span { padding:3px 10px; background:var(--paper); border:2px solid var(--leaf); border-radius:4px; }
   #feedback { font-size:.85em; color:var(--wrong); text-align:center; }
@@ -49,6 +50,7 @@ globalThis.DivisionSheet = (() => {
   <p id="startup-status" class="instruction">Starting worksheet…</p>
   <p class="instruction">Use any square. Enter or → checks your next step.</p>
   <section id="coaching" aria-label="Work through this together" hidden>
+    <p id="coach-question" aria-live="polite" hidden></p>
     <div id="comparison" aria-hidden="true"></div>
     <p id="feedback" role="status"></p>
     <div id="yesno" hidden><button type="button" class="choice" id="yes">Yes</button><button type="button" class="choice" id="no">No</button></div>
@@ -149,6 +151,9 @@ globalThis.DivisionSheet = (() => {
   const render = () => {
     const v = coach.view();
     $('ask').textContent = lastReview?.complete ? (answerFeedback || '✓ Your working is correct.') : v.text;
+    $('ask').hidden = !!v.boolean;
+    $('coach-question').textContent = v.boolean ? v.text : '';
+    $('coach-question').hidden = !v.boolean;
     $('coaching').hidden = !v.help;
     $('feedback').textContent = v.feedback || '';
     $('yesno').hidden = !v.boolean;
@@ -172,6 +177,7 @@ globalThis.DivisionSheet = (() => {
     });
     const comparison = $('comparison'); comparison.replaceChildren();
     const a = v.annotation;
+    comparison.hidden = !!v.boolean || !a;
     if (!a) return;
     const chip = text => { const el = doc.createElement('span'); el.textContent = text; comparison.append(el); };
     if (a.divisor !== undefined && a.partial !== undefined) {
